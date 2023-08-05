@@ -3,18 +3,20 @@
 
 interface arilla_bus_if #(
     parameter int DataWidth = 32,
-    parameter int AddressWidth = 32
+    parameter int ByteAddressWidth = 32
 );
-    localparam int ByteEnables = DataWidth / 8;
-    localparam int ActualAddressWidth = AddressWidth - $clog2(ByteEnables);
+    localparam int ByteSize = 8;
+    localparam int BytesPerWord = DataWidth / ByteSize;
+    localparam int WordAddressWidth = ByteAddressWidth - $clog2(BytesPerWord);
 
-    wire [         DataWidth-1:0] data;
-    wire [ActualAddressWidth-1:0] address;
-    wire [       ByteEnables-1:0] byte_enable;
-    wire                          read;
-    wire                          write;
-    wire                          available;
-    wire                          intercept;
+    wire [       DataWidth-1:0] data;
+    wire [WordAddressWidth-1:0] address;
+    wire [    BytesPerWord-1:0] byte_enable;
+    wire                        read;
+    wire                        write;
+    wire                        available;
+    wire                        intercept;
+
 endinterface
 
 `endif

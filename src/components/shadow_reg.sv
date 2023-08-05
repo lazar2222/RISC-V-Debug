@@ -9,19 +9,17 @@ module shadow_reg #(
 
     input write,
 
-    output [Width-1:0] out,
-    output [Width-1:0] shadow_out
+    output reg [Width-1:0] out,
+    output     [Width-1:0] shadow_out
 );
-    reg [Width-1:0] value;
-
-    assign out = value;
-    assign shadow_out = write ? in : value;
+    assign shadow_out = write ? in : out;
 
     always @(posedge clk) begin
         if (!rst_n) begin
-            value <= ResetValue;
+            out <= ResetValue;
         end else if (write) begin
-            value <= in;
+            out <= in;
         end
     end
+
 endmodule

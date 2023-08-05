@@ -26,6 +26,6 @@ module tb ();
     assign bus_interface.available = available;
     assign bus_interface.intercept = intercept;
 
-    always #50  clk = ! clk ;
+    always #50 clk = !clk;
 
 endmodule
