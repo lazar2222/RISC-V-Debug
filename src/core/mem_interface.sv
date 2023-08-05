@@ -34,13 +34,13 @@ module mem_interface #(
     endgenerate
 
     assign maligns[0] = 1'b0;
-    assign malign = size > MaxSize | maligns[size];
+    assign malign = size > MaxSize || maligns[size];
 
     wire read = bus_interface.available && rd && !malign;
     wire write = bus_interface.available && wr && !malign;
 
     reg  state;
-    wire next_state = read && !state;
+    wire next_state = read;
 
     always @(posedge clk) begin
         if (!rst_n) begin
@@ -50,7 +50,7 @@ module mem_interface #(
         end
     end
 
-    assign complete = write | (read && state);
+    assign complete = write || (read && state);
 
     wire [ByteEnables-1:0] byte_enable;
     wire [MaxSize-1:0] start_index = address[MaxSize-1:0];
@@ -63,13 +63,13 @@ module mem_interface #(
         end
     endgenerate
 
-    wire output_address = write | (read && !state);
+    wire output_address = write || read;
 
     assign bus_interface.data = write ? shift_data_in : {DataWidth{1'bz}};
-    assign bus_interface.address = output_address ? address[AddressWidth-1:MaxSize] : {AddressWidth - MaxSize{1'bz}};
-    assign bus_interface.byte_enable = write ? byte_enable : {ByteEnables{1'bz}};
-    assign bus_interface.read = read ? 1'b1 : 1'bz;
-    assign bus_interface.write = write ? 1'b1 : 1'bz;
+    assign bus_interface.address = bus_interface.available ? address[AddressWidth-1:MaxSize] : {AddressWidth - MaxSize{1'bz}};
+    assign bus_interface.byte_enable = bus_interface.available ? byte_enable : {ByteEnables{1'bz}};
+    assign bus_interface.read = bus_interface.available ? read : 1'bz;
+    assign bus_interface.write = bus_interface.available ? write : 1'bz;
 
     wire [DataWidth-1:0] data = bus_interface.data;
     wire [DataWidth-1:0] shift_data_out = data >> (start_index * 8);

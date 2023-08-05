@@ -8,13 +8,13 @@ interface arilla_bus_if #(
     localparam int ByteEnables = DataWidth / 8;
     localparam int ActualAddressWidth = AddressWidth - $clog2(ByteEnables);
 
-    logic [         DataWidth-1:0] data;
-    logic [ActualAddressWidth-1:0] address;
-    logic [       ByteEnables-1:0] byte_enable;
-    logic                          read;
-    logic                          write;
-    logic                          available;
-    logic                          intercept;
+    wire [         DataWidth-1:0] data;
+    wire [ActualAddressWidth-1:0] address;
+    wire [       ByteEnables-1:0] byte_enable;
+    wire                          read;
+    wire                          write;
+    wire                          available;
+    wire                          intercept;
 endinterface
 
 `endif

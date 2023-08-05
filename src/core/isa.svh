@@ -5,6 +5,7 @@
 `define ISA__RNUM 32
 `define ISA__RVEC 32'd0
 `define ISA__RFLEN 5
+`define ISA__INST_SIZE 2'b10
 
 `define ISA__OPCODE_PFX(_ir)    _ir[1:0]
 `define ISA__OPCODE(_ir)        _ir[6:2]
@@ -34,6 +35,21 @@
 `define ISA__OPCODE_JAL         5'b11_011
 `define ISA__OPCODE_SYSTEM      5'b11_100
 
+`define ISA__FUNCT3_JALR        3'b000
+`define ISA__FUNCT3_BEQ         3'b000
+`define ISA__FUNCT3_BNE         3'b001
+`define ISA__FUNCT3_BLT         3'b100
+`define ISA__FUNCT3_BGE         3'b101
+`define ISA__FUNCT3_BLTU        3'b110
+`define ISA__FUNCT3_BGEU        3'b111
+`define ISA__FUNCT3_LB          3'b000
+`define ISA__FUNCT3_LH          3'b001
+`define ISA__FUNCT3_LW          3'b010
+`define ISA__FUNCT3_LBU         3'b100
+`define ISA__FUNCT3_LHU         3'b101
+`define ISA__FUNCT3_SB          3'b000
+`define ISA__FUNCT3_SH          3'b001
+`define ISA__FUNCT3_SW          3'b010
 `define ISA__FUNCT3_ADDI        3'b000
 `define ISA__FUNCT3_SLTI        3'b010
 `define ISA__FUNCT3_SLTIU       3'b011
@@ -53,21 +69,6 @@
 `define ISA__FUNCT3_SRA         3'b101
 `define ISA__FUNCT3_OR          3'b110
 `define ISA__FUNCT3_AND         3'b111
-`define ISA__FUNCT3_JALR        3'b000
-`define ISA__FUNCT3_BEQ         3'b000
-`define ISA__FUNCT3_BNE         3'b001
-`define ISA__FUNCT3_BLT         3'b100
-`define ISA__FUNCT3_BGE         3'b101
-`define ISA__FUNCT3_BLTU        3'b110
-`define ISA__FUNCT3_BGEU        3'b111
-`define ISA__FUNCT3_LB          3'b000
-`define ISA__FUNCT3_LH          3'b001
-`define ISA__FUNCT3_LW          3'b010
-`define ISA__FUNCT3_LBU         3'b100
-`define ISA__FUNCT3_LHU         3'b101
-`define ISA__FUNCT3_SB          3'b000
-`define ISA__FUNCT3_SH          3'b001
-`define ISA__FUNCT3_SW          3'b010
 `define ISA__FUNCT3_FENCE       3'b000
 `define ISA__FUNCT3_ECALL       3'b000
 `define ISA__FUNCT3_EBREAK      3'b000
@@ -85,6 +86,7 @@
 `define ISA__FUNCT3_CSRRWI      3'b101
 `define ISA__FUNCT3_CSRRSI      3'b110
 `define ISA__FUNCT3_CSRRCI      3'b111
+`define ISA__FUNCT3_SYSINV      3'b100
 
 `define ISA__FUNCT7_SLLI        7'b0000000
 `define ISA__FUNCT7_SRLI        7'b0000000
