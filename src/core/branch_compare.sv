@@ -22,4 +22,5 @@ module branch_compare #(
             default: take = 1'b0;
         endcase
     end
+
 endmodule

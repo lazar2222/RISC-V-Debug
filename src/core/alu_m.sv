@@ -29,4 +29,5 @@ module alu_m #(
             default: c = ZERO;
         endcase
     end
+
 endmodule

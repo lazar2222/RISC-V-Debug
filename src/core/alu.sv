@@ -30,4 +30,5 @@ module alu #(
             default: c = ZERO;
         endcase
     end
+
 endmodule

@@ -20,4 +20,5 @@ module alu_pc #(
 
     assign next_pc = ((branch && take) || jal) ? next_bj : (jalr ? next_i : next_r);
     assign ialign = next_pc[1:0] != 2'd0;
+
 endmodule
