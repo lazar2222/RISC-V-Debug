@@ -103,14 +103,14 @@ module rv_core (
         .c (alu_out)
     );
 
-    /*alu_m #(
+    alu_m #(
         .Width(`ISA__XLEN)
     ) alu_m (
         .a (rs1),
         .b (rs2),
         .op(f3),
         .c (alum_out)
-    );*/
+    );
 
     branch_compare #(
         .Width(`ISA__XLEN)
