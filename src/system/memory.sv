@@ -35,7 +35,7 @@ module memory #(
     wire data_enable = read_hit && !bus_interface.intercept;
     wire data_write = hit && bus_interface.write;
 
-    assign bus_interface.data = (data_enable) ? data_out : {DataWidth{1'bz}};
+    assign bus_interface.data_in = (data_enable) ? data_out : {DataWidth{1'bz}};
 
     always @(posedge clk) begin
         if (!rst_n) begin

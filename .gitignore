@@ -3,3 +3,4 @@ project/incremental_db/
 project/output_files/
 ~$*.xlsx
 *.ver
+*.qws

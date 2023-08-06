@@ -1,9 +1,7 @@
 `include "../system/arilla_bus_if.svh"
 
-module tb ();
+module tb (input clk, input rst_n);
 
-    reg clk = 1'b1;
-    reg rst_n = 1'b0;
     reg available = 1'b1;
     reg intercept = 1'b0;
 
@@ -27,7 +25,5 @@ module tb ();
 
     assign bus_interface.available = available;
     assign bus_interface.intercept = intercept;
-
-    always #50 clk = !clk;
 
 endmodule

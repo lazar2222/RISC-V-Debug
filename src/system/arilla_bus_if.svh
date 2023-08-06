@@ -10,6 +10,7 @@ interface arilla_bus_if #(
     localparam int WordAddressWidth = ByteAddressWidth - $clog2(BytesPerWord);
 
     wire [       DataWidth-1:0] data;
+    wire [       DataWidth-1:0] data_in;
     wire [WordAddressWidth-1:0] address;
     wire [    BytesPerWord-1:0] byte_enable;
     wire                        read;

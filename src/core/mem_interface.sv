@@ -85,7 +85,7 @@ module mem_interface (
     assign bus_interface.read = bus_interface.available ? read : 1'bz;
     assign bus_interface.write = bus_interface.available ? write : 1'bz;
 
-    wire [DataWidth-1:0] data = bus_interface.data;
+    wire [DataWidth-1:0] data = bus_interface.data_in;
     wire [DataWidth-1:0] shift_data_out = data >> (address_reg[MaxSize-1:0] * ByteSize);
     wire [DataWidth-1:0] sign_extend_data[MaxSize+1];
     wire [DataWidth-1:0] zero_extend_data[MaxSize+1];
