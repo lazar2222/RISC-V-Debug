@@ -16,7 +16,9 @@ module tb ();
     );
 
     memory #(
-        .BaseAddress(32'h0)
+        .BaseAddress(32'h0),
+        .InitFile("C:/Users/lazar/Desktop/RISC-V_Debug/src/system/main.mif"),
+        .Hint("ENABLE_RUNTIME_MOD=YES,INSTANCE_NAME=MAIN")
     ) memory (
         .clk(clk),
         .rst_n(rst_n),

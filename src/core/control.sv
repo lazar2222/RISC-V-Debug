@@ -45,6 +45,8 @@ module control (
         end
     end
 
+    assign control_signals.write_ir = !(mcp_reg == LOAD_1 || mcp_reg == STORE_1 || mcp_reg == STORE_2 || mcp_reg == PROLOGUE);
+
     always_comb begin
         mcp_addr = mcp_reg;
         if (mcp_reg == DISPATCH && control_signals.mem_complete_read) begin
@@ -54,7 +56,6 @@ module control (
 
     always_comb begin
         control_signals.write_pc   = 1'b0;
-        control_signals.write_ir   = 1'b0;
         control_signals.write_rd   = 1'b0;
         control_signals.mem_read   = 1'b0;
         control_signals.mem_write  = 1'b0;
@@ -70,12 +71,10 @@ module control (
             DISPATCH: begin
                 control_signals.addr_sel = ADDR_PC;
                 control_signals.mem_read = 1'b1;
-                control_signals.write_ir = 1'b1;
             end
             LUI: begin
                 control_signals.addr_sel = ADDR_PC;
                 control_signals.mem_read = 1'b1;
-                control_signals.write_ir = 1'b1;
                 control_signals.write_pc = 1'b1;
 
                 control_signals.alu_insel1 = ALU1_Z;
@@ -86,7 +85,6 @@ module control (
             AUIPC: begin
                 control_signals.addr_sel = ADDR_PC;
                 control_signals.mem_read = 1'b1;
-                control_signals.write_ir = 1'b1;
                 control_signals.write_pc = 1'b1;
 
                 control_signals.alu_insel1 = ALU1_PC;
@@ -97,7 +95,6 @@ module control (
             JAL: begin
                 control_signals.addr_sel = ADDR_PC;
                 control_signals.mem_read = 1'b1;
-                control_signals.write_ir = 1'b1;
                 control_signals.write_pc = 1'b1;
 
                 control_signals.alu_insel1 = ALU1_PC;
@@ -108,7 +105,6 @@ module control (
             JALR: begin
                 control_signals.addr_sel = ADDR_PC;
                 control_signals.mem_read = 1'b1;
-                control_signals.write_ir = 1'b1;
                 control_signals.write_pc = 1'b1;
 
                 control_signals.alu_insel1 = ALU1_PC;
@@ -119,11 +115,9 @@ module control (
             BRANCH: begin
                 control_signals.addr_sel = ADDR_PC;
                 control_signals.mem_read = 1'b1;
-                control_signals.write_ir = 1'b1;
                 control_signals.write_pc = 1'b1;
             end
             LOAD: begin
-                control_signals.write_ir = 1'b1;
                 control_signals.mem_read = 1'b1;
                 control_signals.addr_sel = ADDR_ALU;
                 control_signals.alu_insel1 = ALU1_RS;
@@ -138,8 +132,6 @@ module control (
             end
             STORE: begin
                 control_signals.addr_sel = ADDR_PC;
-                control_signals.mem_read = 1'b1;
-                control_signals.write_ir = 1'b1;
             end
             STORE_1: begin
                 control_signals.addr_sel = ADDR_ALU;
@@ -155,7 +147,6 @@ module control (
             OPIMM: begin
                 control_signals.addr_sel = ADDR_PC;
                 control_signals.mem_read = 1'b1;
-                control_signals.write_ir = 1'b1;
                 control_signals.write_pc = 1'b1;
 
                 control_signals.alu_insel1 = ALU1_RS;
@@ -166,7 +157,6 @@ module control (
             OP: begin
                 control_signals.addr_sel = ADDR_PC;
                 control_signals.mem_read = 1'b1;
-                control_signals.write_ir = 1'b1;
                 control_signals.write_pc = 1'b1;
 
                 control_signals.alu_insel1 = ALU1_RS;
@@ -177,13 +167,11 @@ module control (
             MISCMEM: begin
                 control_signals.addr_sel = ADDR_PC;
                 control_signals.mem_read = 1'b1;
-                control_signals.write_ir = 1'b1;
                 control_signals.write_pc = 1'b1;
             end
             SYSTEM: begin
                 control_signals.addr_sel = ADDR_PC;
                 control_signals.mem_read = 1'b1;
-                control_signals.write_ir = 1'b1;
                 control_signals.write_pc = 1'b1;
             end
             default: begin

@@ -4,9 +4,9 @@ module memory #(
     parameter int BaseAddress = 32'h0,
     parameter int SizeBytes = 524288,
     //"C:/Users/lazar/Desktop/RISC-V_Debug/src/system/main.mif"
-    parameter string InitFile = "UNUSED",
+    parameter InitFile = "UNUSED",
     //"ENABLE_RUNTIME_MOD=YES,INSTANCE_NAME=MAIN"
-    parameter string Hint = "UNUSED"
+    parameter Hint = "UNUSED"
 ) (
     input clk,
     input rst_n,
