@@ -1,4 +1,5 @@
 `include "control_signals_if.svh"
+`include "isa.svh"
 
 module control (
     input clk,
@@ -6,22 +7,22 @@ module control (
 
     control_signals_if control_signals
 );
-    localparam int PROLOGUE = 32'd000;
-    localparam int DISPATCH = 32'd001;
-    localparam int LUI = 32'd016;
-    localparam int AUIPC = 32'd032;
-    localparam int JAL = 32'd048;
-    localparam int JALR = 32'd064;
-    localparam int BRANCH = 32'd080;
-    localparam int LOAD = 32'd096;
-    localparam int LOAD_1 = 32'd097;
-    localparam int STORE = 32'd112;
-    localparam int STORE_1 = 32'd113;
-    localparam int STORE_2 = 32'd114;
-    localparam int OPIMM = 32'd128;
-    localparam int OP = 32'd144;
-    localparam int MISCMEM = 32'd160;
-    localparam int SYSTEM = 32'd176;
+    localparam logic [4:0] PROLOGUE = 5'd16;
+    localparam logic [4:0] DISPATCH = 5'd17;
+    localparam logic [4:0] LUI = `ISA__OPCODE_LUI;
+    localparam logic [4:0] AUIPC = `ISA__OPCODE_AUIPC;
+    localparam logic [4:0] JAL = `ISA__OPCODE_JAL;
+    localparam logic [4:0] JALR = `ISA__OPCODE_JALR;
+    localparam logic [4:0] BRANCH = `ISA__OPCODE_BRANCH;
+    localparam logic [4:0] LOAD = `ISA__OPCODE_LOAD;
+    localparam logic [4:0] LOAD_1 = 5'd1;
+    localparam logic [4:0] STORE = `ISA__OPCODE_STORE;
+    localparam logic [4:0] STORE_1 = 5'd9;
+    localparam logic [4:0] STORE_2 = 5'd10;
+    localparam logic [4:0] OPIMM = `ISA__OPCODE_OPIMM;
+    localparam logic [4:0] OP = `ISA__OPCODE_OP;
+    localparam logic [4:0] MISCMEM = `ISA__OPCODE_MISCMEM;
+    localparam logic [4:0] SYSTEM = `ISA__OPCODE_SYSTEM;
 
     localparam logic ADDR_ALU = 1'b0;
     localparam logic ADDR_PC = 1'b1;
@@ -34,9 +35,7 @@ module control (
     localparam logic [1:0] ALU2_IM = 2'b01;
     localparam logic [1:0] ALU2_4 = 2'b11;
 
-    localparam logic [4:0] ALU_ADD = 4'b0000;
-
-    int mcp_reg, mcp_next, mcp_addr;
+    reg [4:0] mcp_reg, mcp_next, mcp_addr;
 
     always @(posedge clk) begin
         if (!rst_n) begin
@@ -48,30 +47,8 @@ module control (
 
     always_comb begin
         mcp_addr = mcp_reg;
-        if (mcp_reg == DISPATCH && control_signals.mem_fc) begin
-            if (control_signals.opcode_lui) begin
-                mcp_addr = LUI;
-            end else if (control_signals.opcode_auipc) begin
-                mcp_addr = AUIPC;
-            end else if (control_signals.opcode_jal) begin
-                mcp_addr = JAL;
-            end else if (control_signals.opcode_jalr) begin
-                mcp_addr = JALR;
-            end else if (control_signals.opcode_branch) begin
-                mcp_addr = BRANCH;
-            end else if (control_signals.opcode_load) begin
-                mcp_addr = LOAD;
-            end else if (control_signals.opcode_store) begin
-                mcp_addr = STORE;
-            end else if (control_signals.opcode_opimm) begin
-                mcp_addr = OPIMM;
-            end else if (control_signals.opcode_op) begin
-                mcp_addr = OP;
-            end else if (control_signals.opcode_miscmem) begin
-                mcp_addr = MISCMEM;
-            end else if (control_signals.opcode_system) begin
-                mcp_addr = SYSTEM;
-            end
+        if (mcp_reg == DISPATCH && control_signals.mem_complete_read) begin
+            mcp_addr = control_signals.opcode;
         end
     end
 
@@ -85,7 +62,6 @@ module control (
         control_signals.rd_sel     = RD_ALU;
         control_signals.alu_insel1 = ALU1_RS;
         control_signals.alu_insel2 = ALU2_RS;
-        control_signals.alu_op     = control_signals.aluop_in;
         case (mcp_addr)
             PROLOGUE: begin
                 control_signals.addr_sel = ADDR_PC;
@@ -106,7 +82,6 @@ module control (
                 control_signals.alu_insel2 = ALU2_IM;
                 control_signals.rd_sel = RD_ALU;
                 control_signals.write_rd = 1'b1;
-                control_signals.alu_op = ALU_ADD;
             end
             AUIPC: begin
                 control_signals.addr_sel = ADDR_PC;
@@ -118,7 +93,6 @@ module control (
                 control_signals.alu_insel2 = ALU2_IM;
                 control_signals.rd_sel = RD_ALU;
                 control_signals.write_rd = 1'b1;
-                control_signals.alu_op = ALU_ADD;
             end
             JAL: begin
                 control_signals.addr_sel = ADDR_PC;
@@ -130,7 +104,6 @@ module control (
                 control_signals.alu_insel2 = ALU2_4;
                 control_signals.rd_sel = RD_ALU;
                 control_signals.write_rd = 1'b1;
-                control_signals.alu_op = ALU_ADD;
             end
             JALR: begin
                 control_signals.addr_sel = ADDR_PC;
@@ -142,7 +115,6 @@ module control (
                 control_signals.alu_insel2 = ALU2_4;
                 control_signals.rd_sel = RD_ALU;
                 control_signals.write_rd = 1'b1;
-                control_signals.alu_op = ALU_ADD;
             end
             BRANCH: begin
                 control_signals.addr_sel = ADDR_PC;
@@ -156,7 +128,6 @@ module control (
                 control_signals.addr_sel = ADDR_ALU;
                 control_signals.alu_insel1 = ALU1_RS;
                 control_signals.alu_insel2 = ALU2_IM;
-                control_signals.alu_op = ALU_ADD;
             end
             LOAD_1: begin
                 control_signals.addr_sel = ADDR_PC;
@@ -174,7 +145,6 @@ module control (
                 control_signals.addr_sel = ADDR_ALU;
                 control_signals.alu_insel1 = ALU1_RS;
                 control_signals.alu_insel2 = ALU2_IM;
-                control_signals.alu_op = ALU_ADD;
                 control_signals.mem_write = 1'b1;
             end
             STORE_2: begin
@@ -192,7 +162,6 @@ module control (
                 control_signals.alu_insel2 = ALU2_IM;
                 control_signals.rd_sel = RD_ALU;
                 control_signals.write_rd = 1'b1;
-                control_signals.alu_op = {2'b0, control_signals.aluop_in[2:0]};
             end
             OP: begin
                 control_signals.addr_sel = ADDR_PC;
@@ -269,7 +238,7 @@ module control (
             SYSTEM: begin
                 mcp_next = DISPATCH;
             end
-            default: mcp_next = mcp_addr + 1;
+            default: mcp_next = mcp_addr + 5'd1;
         endcase
     end
 endmodule

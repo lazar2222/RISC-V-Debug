@@ -13,19 +13,18 @@ module rv_core (
     wire [`ISA__XLEN-1:0] pc, next_pc, shadow_pc;
     wire [`ISA__XLEN-1:0] ir;
     wire [`ISA__XLEN-1:0] rs1, rs2, rd;
-    wire [`ISA__XLEN-1:0] mem_in, mem_addr;
+    wire [`ISA__XLEN-1:0] mem_out, mem_addr;
     wire [`ISA__XLEN-1:0] imm;
     wire [`ISA__XLEN-1:0] alu_in1;
     wire [`ISA__XLEN-1:0] alu_in2;
-    wire [`ISA__XLEN-1:0] alui_out;
-    wire [`ISA__XLEN-1:0] alum_out;
     wire [`ISA__XLEN-1:0] alu_out;
+    wire [`ISA__XLEN-1:0] alum_out;
 
     wire [`ISA__RFLEN-1:0] rs1_a, rs2_a, rd_a;
-    wire [1:0] mem_size;
-    wire [3:0] alui_op;
-
-    wire mem_signed, branch_take;
+    wire [4:0] alu_op;
+    wire [2:0] f3;
+    wire [2:0] mem_size;
+    wire branch_take, branch, jal, jalr;
 
     shadow_reg #(
         .Width(`ISA__XLEN),
@@ -45,7 +44,7 @@ module rv_core (
     ) ir_reg (
         .clk(clk),
         .rst_n(rst_n),
-        .in(mem_in),
+        .in(mem_out),
         .write(control_signals.write_ir),
         .shadow_out(ir)
     );
@@ -65,39 +64,30 @@ module rv_core (
         .rd_data2(rs2)
     );
 
-    mem_interface #(
-        .DataWidth(`ISA__XLEN),
-        .AddressWidth(`ISA__XLEN)
-    ) mem_interface (
+    mem_interface mem_interface (
         .clk(clk),
         .rst_n(rst_n),
         .bus_interface(bus_interface),
-        .data_in(rs2),
-        .data_out(mem_in),
         .address(mem_addr),
-        .size(mem_size),
+        .sign_size(mem_size),
         .rd(control_signals.mem_read),
         .wr(control_signals.mem_write),
-        .singed(mem_signed),
+        .data_in(rs2),
+        .data_out(mem_out),
         .malign(control_signals.mem_malign),
-        .complete(control_signals.mem_fc)
+        .complete_read(control_signals.mem_complete_read),
+        .complete_write(control_signals.mem_complete_write)
     );
 
     inst_decode inst_decode (
         .inst(ir),
         .invalid_inst(control_signals.invalid_inst),
-        .opcode_load(control_signals.opcode_load),
-        .opcode_miscmem(control_signals.opcode_miscmem),
-        .opcode_opimm(control_signals.opcode_opimm),
-        .opcode_auipc(control_signals.opcode_auipc),
-        .opcode_store(control_signals.opcode_store),
-        .opcode_op(control_signals.opcode_op),
-        .opcode_lui(control_signals.opcode_lui),
-        .opcode_branch(control_signals.opcode_branch),
-        .opcode_jalr(control_signals.opcode_jalr),
-        .opcode_jal(control_signals.opcode_jal),
-        .opcode_system(control_signals.opcode_system),
-        .alu_op(control_signals.aluop_in),
+        .opcode(control_signals.opcode),
+        .opcode_branch(branch),
+        .opcode_jalr(jalr),
+        .opcode_jal(jal),
+        .f3(f3),
+        .alu_op(alu_op),
         .rd(rd_a),
         .rs1(rs1_a),
         .rs2(rs2_a),
@@ -109,8 +99,8 @@ module rv_core (
     ) alu (
         .a (alu_in1),
         .b (alu_in2),
-        .op(control_signals.alu_op[3:0]),
-        .c (alui_out)
+        .op(alu_op[3:0]),
+        .c (alu_out)
     );
 
     alu_m #(
@@ -118,7 +108,7 @@ module rv_core (
     ) alu_m (
         .a (rs1),
         .b (rs2),
-        .op(control_signals.alu_op[2:0]),
+        .op(f3),
         .c (alum_out)
     );
 
@@ -127,7 +117,7 @@ module rv_core (
     ) branch_compare (
         .a(rs1),
         .b(rs2),
-        .op(control_signals.alu_op[2:0]),
+        .op(f3),
         .take(branch_take)
     );
 
@@ -137,25 +127,24 @@ module rv_core (
         .pc(pc),
         .rs(rs1),
         .imm(imm),
-        .branch(control_signals.opcode_branch),
-        .jal(control_signals.opcode_jal),
-        .jalr(control_signals.opcode_jalr),
+        .branch(branch),
+        .jal(jal),
+        .jalr(jalr),
         .take(branch_take),
         .next_pc(next_pc),
         .ialign(control_signals.ialign)
     );
 
     assign mem_addr = control_signals.addr_sel ? shadow_pc : alu_out;
-    assign rd = control_signals.rd_sel ? mem_in : alu_out;
-    assign alu_out = control_signals.alu_op[4] ? alum_out : alui_out;
+    assign rd = control_signals.rd_sel ? mem_out : (alu_op[4] ? alum_out : alu_out);
     assign alu_in1 = control_signals.alu_insel1[0] ? (control_signals.alu_insel1[1] ? 32'd0 : pc) : rs1;
     assign alu_in2 = control_signals.alu_insel2[0] ? (control_signals.alu_insel2[1] ? 32'd4 : imm) : rs2;
-    assign mem_size = control_signals.addr_sel ? `ISA__INST_SIZE : control_signals.aluop_in[1:0];
-    assign mem_signed = !control_signals.aluop_in[2];
+    assign mem_size = control_signals.addr_sel ? `ISA__INST_SIZE : f3;
 
     control control (
         .clk(clk),
         .rst_n(rst_n),
         .control_signals(control_signals)
     );
+
 endmodule

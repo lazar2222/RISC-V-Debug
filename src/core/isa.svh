@@ -5,7 +5,7 @@
 `define ISA__RNUM 32
 `define ISA__RVEC 32'd0
 `define ISA__RFLEN 5
-`define ISA__INST_SIZE 2'b10
+`define ISA__INST_SIZE 3'b010
 
 `define ISA__OPCODE_PFX(_ir)    _ir[1:0]
 `define ISA__OPCODE(_ir)        _ir[6:2]

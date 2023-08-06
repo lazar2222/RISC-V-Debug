@@ -11,7 +11,8 @@ module mem_interface (
     data_in,
     data_out,
     malign,
-    complete
+    complete_read,
+    complete_write
 );
     localparam int ByteSize = 8;
     localparam int DataWidth = $bits(bus_interface.data);
@@ -28,7 +29,7 @@ module mem_interface (
     input rd, wr;
     input [DataWidth-1:0] data_in;
     output [DataWidth-1:0] data_out;
-    output malign, complete;
+    output malign, complete_read, complete_write;
 
     reg readout;
     reg [SizeSize:0] sign_size_reg;
@@ -64,7 +65,8 @@ module mem_interface (
         end
     end
 
-    assign complete = write || readout;
+    assign complete_read = readout;
+    assign complete_write = write;
 
     wire [BytesPerWord-1:0] byte_enable;
     wire [MaxSize-1:0] start_index = address[MaxSize-1:0];

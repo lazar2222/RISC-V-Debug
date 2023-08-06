@@ -5,6 +5,7 @@ module inst_decode (
 
     output invalid_inst,
 
+    output [4:0] opcode,
     output opcode_load,
     output opcode_miscmem,
     output opcode_opimm,
@@ -17,16 +18,16 @@ module inst_decode (
     output opcode_jal,
     output opcode_system,
 
-    output [4:0] alu_op,
+    output [2:0] f3,
 
     output [`ISA__RFLEN-1:0] rd,
     output [`ISA__RFLEN-1:0] rs1,
     output [`ISA__RFLEN-1:0] rs2,
 
-    output reg [`ISA__XLEN-1:0] imm
+    output reg [`ISA__XLEN-1:0] imm,
+    output reg [4:0] alu_op
 );
-    wire [4:0] opcode = `ISA__OPCODE(inst);
-    wire [2:0] f3 = `ISA__FUNCT3(inst);
+    wire [6:0] f7_add = `ISA__FUNCT7_ADD;
     wire [6:0] f7 = `ISA__FUNCT7(inst);
     wire [`ISA__XLEN-1:0] ii = `ISA__I_IMMEDIATE(inst);
     wire [`ISA__XLEN-1:0] ui = `ISA__U_IMMEDIATE(inst);
@@ -34,10 +35,11 @@ module inst_decode (
     wire [`ISA__XLEN-1:0] ji = `ISA__J_IMMEDIATE(inst);
     wire [`ISA__XLEN-1:0] si = `ISA__S_IMMEDIATE(inst);
 
+    assign opcode = `ISA__OPCODE(inst);
+    assign f3 = `ISA__FUNCT3(inst);
     assign rd  = `ISA__RD(inst);
     assign rs1 = `ISA__RS1(inst);
     assign rs2 = `ISA__RS2(inst);
-    assign alu_op = {f7[0],f7[5],f3};
 
     wire invalid_opcode_pfx = `ISA__OPCODE_PFX(inst) != `ISA__OPCODE_PFX_32BIT;
 
@@ -145,5 +147,16 @@ module inst_decode (
             `ISA__OPCODE_SYSTEM : imm = ii;
             default             : imm = `ISA__RVEC;
         endcase
+        case (opcode)
+            `ISA__OPCODE_LUI    : alu_op = {f7_add[0],f7_add[5],`ISA__FUNCT3_ADD};
+            `ISA__OPCODE_AUIPC  : alu_op = {f7_add[0],f7_add[5],`ISA__FUNCT3_ADD};
+            `ISA__OPCODE_JAL    : alu_op = {f7_add[0],f7_add[5],`ISA__FUNCT3_ADD};
+            `ISA__OPCODE_JALR   : alu_op = {f7_add[0],f7_add[5],`ISA__FUNCT3_ADD};
+            `ISA__OPCODE_LOAD   : alu_op = {f7_add[0],f7_add[5],`ISA__FUNCT3_ADD};
+            `ISA__OPCODE_STORE  : alu_op = {f7_add[0],f7_add[5],`ISA__FUNCT3_ADD};
+            `ISA__OPCODE_OPIMM  : alu_op = {f7_add[0],f7_add[5],f3};
+            default             : alu_op = {f7[0],f7[5],f3};
+        endcase
     end
+
 endmodule
