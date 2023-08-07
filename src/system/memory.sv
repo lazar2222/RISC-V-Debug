@@ -2,7 +2,7 @@
 
 module memory #(
     parameter int BaseAddress = 32'h0,
-    parameter int SizeBytes = 524288,
+    parameter int SizeBytes = 65536,
     //"C:/Users/lazar/Desktop/RISC-V_Debug/src/system/main.mif"
     parameter InitFile = "UNUSED",
     //"ENABLE_RUNTIME_MOD=YES,INSTANCE_NAME=MAIN"
