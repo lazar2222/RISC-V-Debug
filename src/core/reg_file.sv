@@ -1,6 +1,8 @@
+`include "isa.svh"
+
 module reg_file #(
-    parameter int Width = 32,
-    parameter int Depth = 32
+    parameter int Width = `ISA__XLEN,
+    parameter int Depth = `ISA__RNUM
 ) (
     input clk,
     input rst_n,
@@ -14,7 +16,7 @@ module reg_file #(
     output [Width-1:0] rd_data1,
     output [Width-1:0] rd_data2
 );
-    localparam logic [Width-1:0] ZERO = {Width{1'b0}};
+    localparam logic [        Width-1:0] ZERO     = {Width{1'b0}};
     localparam logic [$clog2(Depth)-1:0] REG_ZERO = {$clog2(Depth) - 1{1'b0}};
 
     reg [Width-1:0] registers[Depth];

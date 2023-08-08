@@ -1,11 +1,18 @@
 `ifndef ISA__SVH
 `define ISA__SVH
 
-`define ISA__XLEN 32
-`define ISA__RNUM 32
-`define ISA__RVEC 32'd0
-`define ISA__RFLEN 5
-`define ISA__INST_SIZE 3'b010
+`include "../system/system.svh"
+
+`define ISA__XLEN `SYSTEM__XLEN
+`define ISA__RNUM `SYSTEM__RNUM
+`define ISA__MEXT `SYSTEM__MEXT
+`define ISA__RVEC `SYSTEM__RVEC
+
+`define ISA__RFLEN $clog2(`ISA__RNUM)
+`define ISA__INST_SIZE 32'd4
+`define ISA__INST_LOAD_SIZE $clog2(`ISA__INST_SIZE)
+
+`define ISA__ZERO {`ISA__XLEN{1'b0}}
 
 `define ISA__OPCODE_PFX(_ir)    _ir[1:0]
 `define ISA__OPCODE(_ir)        _ir[6:2]
@@ -23,6 +30,7 @@
 
 `define ISA__OPCODE_PFX_32BIT   2'b11
 
+`define ISA__OPCODE_WIDTH       5
 `define ISA__OPCODE_LOAD        5'b00_000
 `define ISA__OPCODE_MISCMEM     5'b00_011
 `define ISA__OPCODE_OPIMM       5'b00_100
@@ -35,6 +43,7 @@
 `define ISA__OPCODE_JAL         5'b11_011
 `define ISA__OPCODE_SYSTEM      5'b11_100
 
+`define ISA__FUNCT3_WIDTH       3
 `define ISA__FUNCT3_JALR        3'b000
 `define ISA__FUNCT3_BEQ         3'b000
 `define ISA__FUNCT3_BNE         3'b001
@@ -88,6 +97,7 @@
 `define ISA__FUNCT3_CSRRCI      3'b111
 `define ISA__FUNCT3_SYSINV      3'b100
 
+`define ISA__FUNCT7_WIDTH       7
 `define ISA__FUNCT7_SLLI        7'b0000000
 `define ISA__FUNCT7_SRLI        7'b0000000
 `define ISA__FUNCT7_SRAI        7'b0100000
@@ -112,7 +122,7 @@
 
 `define ISA__RD_ECALL           5'b00000
 `define ISA__RS1_ECALL          5'b00000
-`define ISA__IMM_ECALL          12'b000000000000
-`define ISA__IMM_EBREAK         12'b000000000001
+`define ISA__IMM_ECALL          32'd0
+`define ISA__IMM_EBREAK         32'd1
 
 `endif

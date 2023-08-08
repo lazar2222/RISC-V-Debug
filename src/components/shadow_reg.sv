@@ -1,5 +1,5 @@
 module shadow_reg #(
-    parameter int Width = 32,
+    parameter int Width      = 32,
     parameter int ResetValue = 32'd0
 ) (
     input clk,
