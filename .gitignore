@@ -4,3 +4,4 @@ project/output_files/
 ~$*.xlsx
 *.ver
 *.qws
+c5_pin_model_dump.txt
