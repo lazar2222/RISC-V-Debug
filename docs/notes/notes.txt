@@ -1,0 +1,48 @@
+Conformity Check:
+
+    Malign check
+    mem check
+    ialign check
+    invalid inst check
+
+    Execution Environment Interface
+    Error on vacant memory
+
+    exceptions instruction associated:
+    exceptions:
+
+
+    interrupt external associated:
+    interrupts:
+
+
+
+    trap transfer of control caused by exception or interrupt
+    Contained trap requested trap fatal trap
+
+    invalid instruction may cause a fatal trap
+
+    An instruction-address-misaligned exception is generated on a taken branch or 
+    unconditional jump if the target address is not four-byte aligned
+
+    This exception is reported on the branch or jump instruction, 
+    not on the target instruction. 
+    No instruction-address-misaligned exception is generated for a conditional branch that is not taken
+
+    The behavior upon decoding a reserved instruction is contained trap.
+
+    The JAL and JALR instructions will generate an instruction-address-misaligned exception if the
+    target address is not aligned to a four-byte boundary.
+
+    The conditional branch instructions will generate an instruction-address-misaligned exception if the
+    target address is not aligned to a four-byte boundary and the branch condition evaluates to true.
+    If the branch condition evaluates to false, the instruction-address-misaligned exception will not be
+    raised.
+
+    M? optimizations
+
+    Non natural align loads and stores raise contained trap
+
+    When an
+    EEI does not guarantee misaligned loads and stores are handled invisibly, the EEI must define if
+    exceptions caused by address misalignment result in a contained trap
