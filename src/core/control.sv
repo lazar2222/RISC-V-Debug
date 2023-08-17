@@ -25,8 +25,9 @@ module control (
 
     localparam logic       ADDR_ALU = 1'b0;
     localparam logic       ADDR_PC  = 1'b1;
-    localparam logic       RD_ALU   = 1'b0;
-    localparam logic       RD_MEM   = 1'b1;
+    localparam logic [1:0] RD_ALU   = 2'b00;
+    localparam logic [1:0] RD_MEM   = 2'b10;
+    localparam logic [1:0] RD_CSR   = 2'b11;
     localparam logic [1:0] ALU1_RS  = 2'b00;
     localparam logic [1:0] ALU1_PC  = 2'b01;
     localparam logic [1:0] ALU1_ZR  = 2'b11;
@@ -56,6 +57,7 @@ module control (
     always_comb begin
         control_signals.write_pc   = 1'b0;
         control_signals.write_rd   = 1'b0;
+        control_signals.write_csr  = 1'b0;
         control_signals.mem_read   = 1'b0;
         control_signals.mem_write  = 1'b0;
         control_signals.addr_sel   = ADDR_ALU;
@@ -74,8 +76,8 @@ module control (
             LUI: begin
                 control_signals.alu_insel1 = ALU1_ZR;
                 control_signals.alu_insel2 = ALU2_IM;
-                control_signals.rd_sel = RD_ALU;
-                control_signals.write_rd = 1'b1;
+                control_signals.rd_sel     = RD_ALU;
+                control_signals.write_rd   = 1'b1;
 
                 control_signals.write_pc = 1'b1;
                 control_signals.addr_sel = ADDR_PC;
@@ -84,8 +86,8 @@ module control (
             AUIPC: begin
                 control_signals.alu_insel1 = ALU1_PC;
                 control_signals.alu_insel2 = ALU2_IM;
-                control_signals.rd_sel = RD_ALU;
-                control_signals.write_rd = 1'b1;
+                control_signals.rd_sel     = RD_ALU;
+                control_signals.write_rd   = 1'b1;
 
                 control_signals.write_pc = 1'b1;
                 control_signals.addr_sel = ADDR_PC;
@@ -94,8 +96,8 @@ module control (
             JAL: begin
                 control_signals.alu_insel1 = ALU1_PC;
                 control_signals.alu_insel2 = ALU2_IS;
-                control_signals.rd_sel = RD_ALU;
-                control_signals.write_rd = 1'b1;
+                control_signals.rd_sel     = RD_ALU;
+                control_signals.write_rd   = 1'b1;
 
                 control_signals.write_pc = 1'b1;
                 control_signals.addr_sel = ADDR_PC;
@@ -104,8 +106,8 @@ module control (
             JALR: begin
                 control_signals.alu_insel1 = ALU1_PC;
                 control_signals.alu_insel2 = ALU2_IS;
-                control_signals.rd_sel = RD_ALU;
-                control_signals.write_rd = 1'b1;
+                control_signals.rd_sel     = RD_ALU;
+                control_signals.write_rd   = 1'b1;
 
                 control_signals.write_pc = 1'b1;
                 control_signals.addr_sel = ADDR_PC;
@@ -167,6 +169,11 @@ module control (
                 control_signals.mem_read = 1'b1;
             end
             SYSTEM: begin
+                if (control_signals.f3 != `ISA__FUNCT3_ECALL) begin
+                    control_signals.rd_sel    = RD_CSR;
+                    control_signals.write_csr = 1'b1;
+                    control_signals.write_rd  = 1'b1;
+                end
                 control_signals.write_pc = 1'b1;
                 control_signals.addr_sel = ADDR_PC;
                 control_signals.mem_read = 1'b1;

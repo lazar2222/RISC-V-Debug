@@ -14,6 +14,7 @@ module inst_decode (
     output [`ISA__RFLEN-1:0] rs2,
 
     output reg [        `ISA__XLEN-1:0] imm,
+    output     [        `ISA__XLEN-1:0] csri,
     output reg [`ISA__FUNCT3_WIDTH-1:0] op,
     output reg                          mod,
     output reg                          mul
@@ -30,6 +31,7 @@ module inst_decode (
     assign rd     = `ISA__RD(inst);
     assign rs1    = `ISA__RS1(inst);
     assign rs2    = `ISA__RS2(inst);
+    assign csri   = {{`ISA__XLEN - `ISA__RFLEN{1'b0}},rs1};
 
     wire invalid_opcode_pfx = `ISA__OPCODE_PFX(inst) != `ISA__OPCODE_PFX_32BIT;
 
@@ -101,11 +103,11 @@ module inst_decode (
 
     wire valid_csr =
         (  f3 == `ISA__FUNCT3_CSRRW
-        || f3 == `ISA__FUNCT3_CSRRW
-        || f3 == `ISA__FUNCT3_CSRRW
-        || f3 == `ISA__FUNCT3_CSRRW
-        || f3 == `ISA__FUNCT3_CSRRW
-        || f3 == `ISA__FUNCT3_CSRRW
+        || f3 == `ISA__FUNCT3_CSRRS
+        || f3 == `ISA__FUNCT3_CSRRC
+        || f3 == `ISA__FUNCT3_CSRRWI
+        || f3 == `ISA__FUNCT3_CSRRSI
+        || f3 == `ISA__FUNCT3_CSRRCI
         );
 
     wire valid_call =

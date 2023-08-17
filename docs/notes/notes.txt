@@ -46,3 +46,67 @@ Conformity Check:
     When an
     EEI does not guarantee misaligned loads and stores are handled invisibly, the EEI must define if
     exceptions caused by address misalignment result in a contained trap
+
+    executing unsupported instruction/ even non permitted will trigger invalid instruction
+
+M notes:
+    I still dont get how these things work, k they work
+    Fused operations, thats the M optimizations
+    Internal done checking, to simplify control, separate result registers
+    For REM, the sign of the result equals the sign of the dividend.
+    For both signed and unsigned division, it holds that dividend = divisor × quotient + remainder.
+    Again rem and div fusion, or no?
+    Div zero and overflow
+
+counters:
+
+priv listing:
+    ECALL
+    EBREAK
+    MRET
+    WFI
+
+Priviledge modes:
+    M Machine
+    D Debug
+
+interrupts:
+I am looking for how a RISC-V processor processes interrupt requests.
+
+I looked at the Instruction Set Manuals and information on the internet. The focus is on explaining exactly what the title sets: the instruction set. In my view, how interrupts are handled is a question of what is called the "programmer's model" of the processor. It does not clearly fit into a document about an instruction set, because parts of interrupt processing are not expressed in instructions. Clearly, jumping into an ISR is not an instruction that shows up anywhere in the program code. The Instruction Set Manuals offer descriptions of say mret and mstatus, but fail to provide a holistic view.
+
+For a hypothetical architecture, interrupt processing might be described like this:
+
+If the IRQ line is high and the I-bit in the status register is set,
+the processor executes the following steps atomically:
+
+ - Push the PC of the next instruction onto the stack.
+ - Push the status register onto the stack.
+ - Clear the I-bit in the status register.
+ - The PC is set to the location specified in the INTHNDLR register.
+This is the kind of information I am looking for for the RISC-V architecture.
+
+Fundamentally, the processor has some extra registers, called Control & Status Registers, aka CSRs, that are used to hold some critical state, such as the interrupted pc, the interrupted privilege level, and the cause of the interrupt, etc. In addition, the CSRs hold the interrupt configuration, one piece of state of which is the address of the interrupt vector table, as well as the current privilege level, and more, like whether it is running in 32-bit mode or larger.
+
+Upon an interrupt, all the processor does then, is
+
+capture the interrupted pc into a CSR — called mepc
+capture the current privilege level into a CSR
+set the interrupt cause CSR — called mcause
+if the exception was due to a page fault then mtval holds the fault address
+turn off interrupts — mie
+look up the interrupt handler in the vector table specified by a CSR — called mtvec
+and transfer control (set the pc) to the ISR
+Significantly complicating things in RISC V is the number of optional things in the privileged specification. Among them there are 3 banks of CSRs (the CSR names vary the first letter) — loosely associated with the 3 allowed for privilege levels, U, S, M — most of which are optional (only M is actually required). (Also optional, for example, is 64-bit or larger (128), and the ability to then run in a 32-bit mode, multiple processors, floating point, etc...)
+
+The CSR banks and privilege levels are there so that a complete implementation can provide good support for hypervisors/virtual machines, operating systems, and applications. For a simple application, say, on an embedded processor, only one CSR bank and one privilege level are really needed.
+
+If you are familiar with MIPS interrupt handling, you'll find RISC V somewhat familiar though quite a bit more complicated. However, fundamentally, these processors use extra registers (on MIPS they are in "coprocessor 0") rather than stack for storage of interrupted state. Whereas MIPS dedicated 2 of the general purpose processor registers (integer $k0, $k1) to interrupt handling, RISC V does not. However, unlike MIPS, RISC V provides an additional CSR for interrupt handlers to use — called mscratch, which can be used (like $k0) to temporarily hold a value from a regular register (of the interrupted thread) for the ISR to function, or, because it is protected, it can be set up as a pointer to the currently running thread's control block, where CPU registers of the interrupted thread can be saved.
+
+The RARS simulator provides for two modes, U and M, and has the M set of CSRs, which allow you to write an interrupt handler as a mini operating system to service an application.
+
+If you want more information, start with study of the MRET instruction, since this somewhat reverses/undoes the interrupt. Otherwise, have a look at the RARS simulator where you can actually write an interrupt handler.
+
+Which mie are you referring to here when you say the processor turns off interrupts? The mstatus mie or the mie CSR? Also do you mind writing out what mret does? – 
+
+@CharlesLohr, mie IIRC, not mstatus.mie. mret restores the execution of an interrupted thread (doesn't have to be the immediately interrupted thread), including setting pc to mepc and restoring the interrupt state as well as the mode (whether user or supervisor). Try RARS, write an exception handler that does simply mret and some user code that causes an exception (say via ecall or lw to bad address). – 

@@ -1,5 +1,6 @@
 `include "../system/arilla_bus_if.svh"
 `include "control_signals_if.svh"
+`include "csr_if.svh"
 `include "isa.svh"
 
 module rv_core (
@@ -9,16 +10,19 @@ module rv_core (
     arilla_bus_if bus_interface
 );
     control_signals_if control_signals ();
+    csr_if             csr_interface   ();
 
     wire [`ISA__XLEN-1:0] pc, next_pc, shadow_pc;
     wire [`ISA__XLEN-1:0] ir;
     wire [`ISA__XLEN-1:0] rs1, rs2, rd;
     wire [`ISA__XLEN-1:0] mem_out, mem_addr;
     wire [`ISA__XLEN-1:0] imm;
+    wire [`ISA__XLEN-1:0] csri;
     wire [`ISA__XLEN-1:0] alu_in1;
     wire [`ISA__XLEN-1:0] alu_in2;
     wire [`ISA__XLEN-1:0] alu_out;
     wire [`ISA__XLEN-1:0] alum_out;
+    wire [`ISA__XLEN-1:0] csr_out;
 
     wire [       `ISA__RFLEN-1:0] rs1_a, rs2_a, rd_a;
     wire [`ISA__FUNCT3_WIDTH-1:0] op;
@@ -27,11 +31,13 @@ module rv_core (
 
     wire mod, mul;
 
-    assign mem_addr = control_signals.addr_sel      ? shadow_pc            : alu_out;
-    assign rd       = control_signals.rd_sel        ? mem_out              : (mul                           ? alum_out : alu_out);
-    assign alu_in1  = control_signals.alu_insel1[1] ? `ISA__ZERO           : (control_signals.alu_insel1[0] ? pc       : rs1);
-    assign alu_in2  = control_signals.alu_insel2[1] ? `ISA__INST_SIZE      : (control_signals.alu_insel2[0] ? imm      : rs2);
-    assign mem_size = control_signals.addr_sel      ? `ISA__INST_LOAD_SIZE : f3;
+    assign mem_addr = control_signals.addr_sel      ? shadow_pc                                       : alu_out;
+    assign rd       = control_signals.rd_sel[1]     ? (control_signals.rd_sel[0] ? csr_out : mem_out) : (mul                           ? alum_out : alu_out);
+    assign alu_in1  = control_signals.alu_insel1[1] ? `ISA__ZERO                                      : (control_signals.alu_insel1[0] ? pc       : rs1);
+    assign alu_in2  = control_signals.alu_insel2[1] ? `ISA__INST_SIZE                                 : (control_signals.alu_insel2[0] ? imm      : rs2);
+    assign mem_size = control_signals.addr_sel      ? `ISA__INST_LOAD_SIZE                            : f3;
+
+    assign control_signals.f3 = f3;
 
     shadow_reg #(
         .Width     (`ISA__XLEN),
@@ -95,6 +101,7 @@ module rv_core (
         .rs1         (rs1_a),
         .rs2         (rs2_a),
         .imm         (imm),
+        .csri        (csri),
         .op          (op),
         .mod         (mod),
         .mul         (mul)
@@ -142,6 +149,22 @@ module rv_core (
         .clk            (clk),
         .rst_n          (rst_n),
         .control_signals(control_signals)
+    );
+
+    csr csr (
+        .clk          (clk),
+        .rst_n        (rst_n),
+        .reg_in       (rs1),
+        .imm_in       (csri),
+        .addr         (imm),
+        .rs           (rs1_a),
+        .f3           (f3),
+        .write        (control_signals.write_csr),
+        .debug        (1'b0),
+        .reg_out      (csr_out),
+        .illegal      (control_signals.invalid_csr),
+        .bus_interface(bus_interface),
+        .csr_interface(csr_interface)
     );
 
 endmodule
