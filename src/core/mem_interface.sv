@@ -12,7 +12,8 @@ module mem_interface (
     data_out,
     malign,
     complete_read,
-    complete_write
+    complete_write,
+    hit
 );
     localparam int DataWidth        = $bits(bus_interface.data_ctp);
     localparam int WordAddressWidth = $bits(bus_interface.address);
@@ -38,8 +39,8 @@ module mem_interface (
     output malign;
     output complete_read;
     output complete_write;
+    output hit;
 
-    reg                         readout;
     reg  [          SizeSize:0] sign_size_reg;
     reg  [ByteAddressWidth-1:0] address_reg;
 
@@ -64,18 +65,17 @@ module mem_interface (
 
     always @(posedge clk) begin
         if (!rst_n) begin
-            readout       <= 1'b0;
             sign_size_reg <= {MaxSize + 1{1'b0}};
             address_reg   <= {ByteAddressWidth{1'b0}};
         end else begin
-            readout       <= read;
             sign_size_reg <= sign_size;
             address_reg   <= address;
         end
     end
 
-    assign complete_read  = readout;
+    assign complete_read  = read;
     assign complete_write = write;
+    assign hit            = bus_interface.hit;
 
     wire [BytesPerWord-1:0] byte_enable;
     wire [     MaxSize-1:0] start_index   = address[MaxSize-1:0];

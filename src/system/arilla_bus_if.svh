@@ -17,6 +17,7 @@ interface arilla_bus_if #(
     wire                        write;
     wire                        available;
     wire                        intercept;
+    tri0                        hit;
 
 endinterface
 

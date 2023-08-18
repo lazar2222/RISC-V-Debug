@@ -4,10 +4,10 @@
 `include "isa.svh"
 
 interface control_signals_if;
-    wire                          mem_complete_read, mem_complete_write, mem_malign;
-    wire                          invalid_inst, ialign, invalid_csr;
+    wire                          mem_complete_read, mem_complete_write;
     wire [`ISA__OPCODE_WIDTH-1:0] opcode;
     wire [`ISA__FUNCT3_WIDTH-1:0] f3;
+    reg                           check_mem, check_inst, check_ialign, check_csr;
     reg                           write_pc, write_ir, write_rd, write_csr;
     reg                           mem_read, mem_write;
     reg                           addr_sel;

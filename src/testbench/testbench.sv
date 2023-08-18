@@ -5,6 +5,7 @@ module testbench ();
 
     reg clk;
     reg rst_n;
+    reg available;
 
     always #50 clk = !clk;
 
@@ -15,13 +16,24 @@ module testbench ();
         rst_n = 1'b1;
     end
 
+    initial begin
+        available = 1'b1;
+        #1
+        forever begin
+            available = 1'b1;
+            #400;
+            available = 1'b0;
+            #400;
+        end
+    end
+
     arilla_bus_if #(
         .DataWidth       (`SYSTEM__XLEN),
         .ByteAddressWidth(`SYSTEM__ALEN),
         .ByteSize        (`SYSTEM__BLEN)
     ) bus_interface ();
 
-    assign bus_interface.available = 1'b1;
+    assign bus_interface.available = available;
     assign bus_interface.intercept = 1'b0;
 
     rv_core rv_core (

@@ -30,6 +30,8 @@ module rv_core (
     wire [`ISA__FUNCT3_WIDTH-1:0] mem_size;
 
     wire mod, mul;
+    wire malign, ialign, invalid_inst, invalid_csr;
+    wire hit;
 
     assign mem_addr = control_signals.addr_sel      ? shadow_pc                                       : alu_out;
     assign rd       = control_signals.rd_sel[1]     ? (control_signals.rd_sel[0] ? csr_out : mem_out) : (mul                           ? alum_out : alu_out);
@@ -87,14 +89,15 @@ module rv_core (
         .wr            (control_signals.mem_write),
         .data_in       (rs2),
         .data_out      (mem_out),
-        .malign        (control_signals.mem_malign),
+        .malign        (malign),
         .complete_read (control_signals.mem_complete_read),
-        .complete_write(control_signals.mem_complete_write)
+        .complete_write(control_signals.mem_complete_write),
+        .hit           (hit)
     );
 
     inst_decode inst_decode (
         .inst        (ir),
-        .invalid_inst(control_signals.invalid_inst),
+        .invalid_inst(invalid_inst),
         .opcode      (control_signals.opcode),
         .f3          (f3),
         .rd          (rd_a),
@@ -142,7 +145,7 @@ module rv_core (
         .opcode (control_signals.opcode),
         .f3     (f3),
         .next_pc(next_pc),
-        .ialign (control_signals.ialign)
+        .ialign (ialign)
     );
 
     control control (
@@ -162,7 +165,7 @@ module rv_core (
         .write        (control_signals.write_csr),
         .debug        (1'b0),
         .reg_out      (csr_out),
-        .illegal      (control_signals.invalid_csr),
+        .illegal      (invalid_csr),
         .bus_interface(bus_interface),
         .csr_interface(csr_interface)
     );

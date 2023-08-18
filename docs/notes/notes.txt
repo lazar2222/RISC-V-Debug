@@ -1,7 +1,6 @@
 Conformity Check:
 
     Malign check
-    mem check
     ialign check
     invalid inst check
 

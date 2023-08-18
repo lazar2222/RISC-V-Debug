@@ -33,7 +33,8 @@ module memory #(
     wire data_enable = read_hit && !bus_interface.intercept;
     wire data_write  = hit && bus_interface.write;
 
-    assign bus_interface.data_ptc = (data_enable) ? data_out : {DataWidth{1'bz}};
+    assign bus_interface.hit      = hit         ? 1'b1     : 1'bz;
+    assign bus_interface.data_ptc = data_enable ? data_out : {DataWidth{1'bz}};
 
     always @(posedge clk) begin
         if (!rst_n) begin

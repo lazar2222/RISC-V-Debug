@@ -15,9 +15,11 @@ module control (
     localparam logic [`ISA__OPCODE_WIDTH-1:0] JALR     = `ISA__OPCODE_JALR;
     localparam logic [`ISA__OPCODE_WIDTH-1:0] BRANCH   = `ISA__OPCODE_BRANCH;
     localparam logic [`ISA__OPCODE_WIDTH-1:0] LOAD     = `ISA__OPCODE_LOAD;
-    localparam logic [`ISA__OPCODE_WIDTH-1:0] LOAD_1   = `ISA__OPCODE_LOAD  + 5'd1;
+    localparam logic [`ISA__OPCODE_WIDTH-1:0] LOAD_W   = `ISA__OPCODE_LOAD  + 5'd1;
+    localparam logic [`ISA__OPCODE_WIDTH-1:0] LOAD_1   = `ISA__OPCODE_LOAD  + 5'd2;
     localparam logic [`ISA__OPCODE_WIDTH-1:0] STORE    = `ISA__OPCODE_STORE;
-    localparam logic [`ISA__OPCODE_WIDTH-1:0] STORE_1  = `ISA__OPCODE_STORE + 5'd1;
+    localparam logic [`ISA__OPCODE_WIDTH-1:0] STORE_W  = `ISA__OPCODE_STORE + 5'd1;
+    localparam logic [`ISA__OPCODE_WIDTH-1:0] STORE_1  = `ISA__OPCODE_STORE + 5'd2;
     localparam logic [`ISA__OPCODE_WIDTH-1:0] OPIMM    = `ISA__OPCODE_OPIMM;
     localparam logic [`ISA__OPCODE_WIDTH-1:0] OP       = `ISA__OPCODE_OP;
     localparam logic [`ISA__OPCODE_WIDTH-1:0] MISCMEM  = `ISA__OPCODE_MISCMEM;
@@ -45,25 +47,29 @@ module control (
         end
     end
 
-    assign control_signals.write_ir = !(mcp_reg == LOAD_1 || mcp_reg == STORE_1 || mcp_reg == PROLOGUE);
+    assign control_signals.write_ir = !(mcp_reg == LOAD_1 || mcp_reg == STORE_1 || mcp_reg == PROLOGUE || mcp_reg == LOAD_W || mcp_reg == STORE_W);
 
     always_comb begin
         mcp_addr = mcp_reg;
-        if (mcp_reg == DISPATCH && control_signals.mem_complete_read) begin
+        if (mcp_reg == DISPATCH) begin
             mcp_addr = control_signals.opcode;
         end
     end
 
     always_comb begin
-        control_signals.write_pc   = 1'b0;
-        control_signals.write_rd   = 1'b0;
-        control_signals.write_csr  = 1'b0;
-        control_signals.mem_read   = 1'b0;
-        control_signals.mem_write  = 1'b0;
-        control_signals.addr_sel   = ADDR_ALU;
-        control_signals.rd_sel     = RD_ALU;
-        control_signals.alu_insel1 = ALU1_RS;
-        control_signals.alu_insel2 = ALU2_RS;
+        control_signals.check_mem    = 1'b0;
+        control_signals.check_inst   = 1'b0;
+        control_signals.check_ialign = 1'b0;
+        control_signals.check_csr    = 1'b0;
+        control_signals.write_pc     = 1'b0;
+        control_signals.write_rd     = 1'b0;
+        control_signals.write_csr    = 1'b0;
+        control_signals.mem_read     = 1'b0;
+        control_signals.mem_write    = 1'b0;
+        control_signals.addr_sel     = ADDR_ALU;
+        control_signals.rd_sel       = RD_ALU;
+        control_signals.alu_insel1   = ALU1_RS;
+        control_signals.alu_insel2   = ALU2_RS;
         case (mcp_addr)
             PROLOGUE: begin
                 control_signals.addr_sel = ADDR_PC;
@@ -124,6 +130,12 @@ module control (
                 control_signals.addr_sel   = ADDR_ALU;
                 control_signals.mem_read   = 1'b1;
             end
+            LOAD_W: begin
+                control_signals.alu_insel1 = ALU1_RS;
+                control_signals.alu_insel2 = ALU2_IM;
+                control_signals.addr_sel   = ADDR_ALU;
+                control_signals.mem_read   = 1'b1;
+            end
             LOAD_1: begin
                 control_signals.rd_sel   = RD_MEM;
                 control_signals.write_rd = 1'b1;
@@ -133,6 +145,12 @@ module control (
                 control_signals.mem_read = 1'b1;
             end
             STORE: begin
+                control_signals.alu_insel1 = ALU1_RS;
+                control_signals.alu_insel2 = ALU2_IM;
+                control_signals.addr_sel   = ADDR_ALU;
+                control_signals.mem_write  = 1'b1;
+            end
+            STORE_W: begin
                 control_signals.alu_insel1 = ALU1_RS;
                 control_signals.alu_insel2 = ALU2_IM;
                 control_signals.addr_sel   = ADDR_ALU;
@@ -185,18 +203,22 @@ module control (
 
     always_comb begin
         case (mcp_addr)
-            DISPATCH: mcp_next = DISPATCH;
-            LUI:      mcp_next = DISPATCH;
-            AUIPC:    mcp_next = DISPATCH;
-            JAL:      mcp_next = DISPATCH;
-            JALR:     mcp_next = DISPATCH;
-            BRANCH:   mcp_next = DISPATCH;
-            LOAD_1:   mcp_next = DISPATCH;
-            STORE_1:  mcp_next = DISPATCH;
-            OPIMM:    mcp_next = DISPATCH;
-            OP:       mcp_next = DISPATCH;
-            MISCMEM:  mcp_next = DISPATCH;
-            SYSTEM:   mcp_next = DISPATCH;
+            PROLOGUE: mcp_next = control_signals.mem_complete_read  ? DISPATCH : PROLOGUE;
+            LUI:      mcp_next = control_signals.mem_complete_read  ? DISPATCH : PROLOGUE;
+            AUIPC:    mcp_next = control_signals.mem_complete_read  ? DISPATCH : PROLOGUE;
+            JAL:      mcp_next = control_signals.mem_complete_read  ? DISPATCH : PROLOGUE;
+            JALR:     mcp_next = control_signals.mem_complete_read  ? DISPATCH : PROLOGUE;
+            BRANCH:   mcp_next = control_signals.mem_complete_read  ? DISPATCH : PROLOGUE;
+            LOAD:     mcp_next = control_signals.mem_complete_read  ? LOAD_1   : LOAD_W;
+            LOAD_W:   mcp_next = control_signals.mem_complete_read  ? LOAD_1   : LOAD_W;
+            LOAD_1:   mcp_next = control_signals.mem_complete_read  ? DISPATCH : PROLOGUE;
+            STORE:    mcp_next = control_signals.mem_complete_write ? STORE_1  : STORE_W;
+            STORE_W:  mcp_next = control_signals.mem_complete_write ? STORE_1  : STORE_W;
+            STORE_1:  mcp_next = control_signals.mem_complete_read  ? DISPATCH : PROLOGUE;
+            OPIMM:    mcp_next = control_signals.mem_complete_read  ? DISPATCH : PROLOGUE;
+            OP:       mcp_next = control_signals.mem_complete_read  ? DISPATCH : PROLOGUE;
+            MISCMEM:  mcp_next = control_signals.mem_complete_read  ? DISPATCH : PROLOGUE;
+            SYSTEM:   mcp_next = control_signals.mem_complete_read  ? DISPATCH : PROLOGUE;
             default:  mcp_next = mcp_addr + 5'd1;
         endcase
     end
