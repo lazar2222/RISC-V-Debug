@@ -21,9 +21,9 @@ module testbench ();
         #1
         forever begin
             available = 1'b1;
-            #400;
+            #300;
             available = 1'b0;
-            #400;
+            #200;
         end
     end
 

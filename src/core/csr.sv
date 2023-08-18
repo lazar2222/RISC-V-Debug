@@ -16,7 +16,7 @@ module csr (
     input write,
     input debug,
 
-    output [`ISA__XLEN-1:0] reg_out,
+    output tri0 [`ISA__XLEN-1:0] reg_out,
 
     output illegal,
 
@@ -35,7 +35,7 @@ module csr (
     wire imm_zero  = imm_in == {`ISA__XLEN{1'b0}};
     wire write_csr = !(f3[1] && (f3[2] ? imm_zero : rs_zero));
 
-    assign illegal = !hit || (write_csr && `CSR__RW_FIELD(address) == `CSR__READ_ONLY) || (!debug && `CSR__DEBUG_FIELD(address) == `CSR__DEBUG_ONLY);
+    assign illegal = write && (!hit || (write_csr && `CSR__RW_FIELD(address) == `CSR__READ_ONLY) || (!debug && `CSR__DEBUG_FIELD(address) == `CSR__DEBUG_ONLY));
 
     wire write_reg = write && write_csr && !illegal;
 

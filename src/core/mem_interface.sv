@@ -10,10 +10,10 @@ module mem_interface (
     wr,
     data_in,
     data_out,
-    malign,
+    malign_r,
     complete_read,
     complete_write,
-    hit
+    hit_r
 );
     localparam int DataWidth        = $bits(bus_interface.data_ctp);
     localparam int WordAddressWidth = $bits(bus_interface.address);
@@ -36,10 +36,10 @@ module mem_interface (
     input  [DataWidth-1:0] data_in;
     output [DataWidth-1:0] data_out;
 
-    output malign;
     output complete_read;
     output complete_write;
-    output hit;
+    output reg malign_r;
+    output reg hit_r;
 
     reg  [          SizeSize:0] sign_size_reg;
     reg  [ByteAddressWidth-1:0] address_reg;
@@ -58,24 +58,28 @@ module mem_interface (
     endgenerate
 
     assign maligns[0] = 1'b0;
-    assign malign     = size > MaxSize || maligns[size];
+    wire   malign     = size > MaxSize || maligns[size];
 
-    wire read  = bus_interface.available && rd && !malign;
-    wire write = bus_interface.available && wr && !malign;
+    wire  hit  = bus_interface.hit;
+    wire read  = bus_interface.available && rd && !malign && hit;
+    wire write = bus_interface.available && wr && !malign && hit;
 
     always @(posedge clk) begin
         if (!rst_n) begin
             sign_size_reg <= {MaxSize + 1{1'b0}};
             address_reg   <= {ByteAddressWidth{1'b0}};
+            malign_r      <= 1'b0;
+            hit_r         <= 1'b0;
         end else begin
             sign_size_reg <= sign_size;
             address_reg   <= address;
+            malign_r      <= malign;
+            hit_r         <= hit;
         end
     end
 
-    assign complete_read  = read;
-    assign complete_write = write;
-    assign hit            = bus_interface.hit;
+    assign complete_read  = bus_interface.available && rd;
+    assign complete_write = bus_interface.available && wr;
 
     wire [BytesPerWord-1:0] byte_enable;
     wire [     MaxSize-1:0] start_index   = address[MaxSize-1:0];

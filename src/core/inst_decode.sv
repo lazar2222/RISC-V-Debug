@@ -17,7 +17,9 @@ module inst_decode (
     output     [        `ISA__XLEN-1:0] csri,
     output reg [`ISA__FUNCT3_WIDTH-1:0] op,
     output reg                          mod,
-    output reg                          mul
+    output reg                          mul,
+    output                              ecall,
+    output                              ebreak
 );
     wire [`ISA__FUNCT7_WIDTH-1:0] f7 = `ISA__FUNCT7(inst);
     wire [        `ISA__XLEN-1:0] ii = `ISA__I_IMMEDIATE(inst);
@@ -110,18 +112,25 @@ module inst_decode (
         || f3 == `ISA__FUNCT3_CSRRCI
         );
 
-    wire valid_call =
+    assign ecall =
         (  f3 == `ISA__FUNCT3_ECALL
         && rd == `ISA__RD_ECALL
         && rs1 == `ISA__RS1_ECALL
-        && (ii == `ISA__IMM_ECALL || ii == `ISA__IMM_EBREAK)
+        && ii == `ISA__IMM_ECALL
+        );
+
+    assign ebreak =
+        (  f3 == `ISA__FUNCT3_ECALL
+        && rd == `ISA__RD_ECALL
+        && rs1 == `ISA__RS1_ECALL
+        && ii == `ISA__IMM_EBREAK
         );
 
     wire invalid_jalr    = opcode_jalr    && !(f3 == `ISA__FUNCT3_JALR);
     wire invalid_opimm   = opcode_opimm   && slli_or_srli_or_srai && !valid_funct7;
     wire invalid_op      = opcode_op      && !valid_funct7;
     wire invalid_miscmem = opcode_miscmem && !(f3 == `ISA__FUNCT3_FENCE);
-    wire invalid_system = opcode_system   && !(valid_call || valid_csr);
+    wire invalid_system = opcode_system   && !(ecall || ebreak || valid_csr);
 
     assign invalid_inst =
         (  invalid_opcode_pfx

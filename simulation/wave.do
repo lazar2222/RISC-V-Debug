@@ -13,8 +13,10 @@ add wave -noupdate /testbench/bus_interface/available
 add wave -noupdate /testbench/bus_interface/intercept
 add wave -noupdate /testbench/bus_interface/hit
 add wave -noupdate /testbench/rv_core/pc
+add wave -noupdate /testbench/rv_core/alu_pc
 add wave -noupdate /testbench/rv_core/next_pc
 add wave -noupdate /testbench/rv_core/shadow_pc
+add wave -noupdate /testbench/rv_core/ivec
 add wave -noupdate /testbench/rv_core/ir
 add wave -noupdate /testbench/rv_core/rs1
 add wave -noupdate /testbench/rv_core/rs2
@@ -36,6 +38,9 @@ add wave -noupdate /testbench/rv_core/f3
 add wave -noupdate /testbench/rv_core/mem_size
 add wave -noupdate /testbench/rv_core/mod
 add wave -noupdate /testbench/rv_core/mul
+add wave -noupdate /testbench/rv_core/ecall
+add wave -noupdate /testbench/rv_core/ebreak
+add wave -noupdate /testbench/rv_core/trap
 add wave -noupdate /testbench/rv_core/malign
 add wave -noupdate /testbench/rv_core/ialign
 add wave -noupdate /testbench/rv_core/invalid_inst
@@ -45,10 +50,6 @@ add wave -noupdate /testbench/rv_core/control_signals/mem_complete_read
 add wave -noupdate /testbench/rv_core/control_signals/mem_complete_write
 add wave -noupdate /testbench/rv_core/control_signals/opcode
 add wave -noupdate /testbench/rv_core/control_signals/f3
-add wave -noupdate /testbench/rv_core/control_signals/check_mem
-add wave -noupdate /testbench/rv_core/control_signals/check_inst
-add wave -noupdate /testbench/rv_core/control_signals/check_ialign
-add wave -noupdate /testbench/rv_core/control_signals/check_csr
 add wave -noupdate /testbench/rv_core/control_signals/write_pc
 add wave -noupdate /testbench/rv_core/control_signals/write_ir
 add wave -noupdate /testbench/rv_core/control_signals/write_rd
@@ -62,36 +63,38 @@ add wave -noupdate /testbench/rv_core/control_signals/alu_insel2
 add wave -noupdate /testbench/rv_core/control/mcp_reg
 add wave -noupdate /testbench/rv_core/control/mcp_next
 add wave -noupdate /testbench/rv_core/control/mcp_addr
-add wave -noupdate /testbench/rv_core/mem_interface/address
-add wave -noupdate /testbench/rv_core/mem_interface/sign_size
-add wave -noupdate /testbench/rv_core/mem_interface/rd
-add wave -noupdate /testbench/rv_core/mem_interface/wr
-add wave -noupdate /testbench/rv_core/mem_interface/data_in
-add wave -noupdate /testbench/rv_core/mem_interface/data_out
-add wave -noupdate /testbench/rv_core/mem_interface/malign
-add wave -noupdate /testbench/rv_core/mem_interface/complete_read
-add wave -noupdate /testbench/rv_core/mem_interface/complete_write
-add wave -noupdate /testbench/rv_core/mem_interface/hit
-add wave -noupdate /testbench/rv_core/mem_interface/sign_size_reg
-add wave -noupdate /testbench/rv_core/mem_interface/address_reg
-add wave -noupdate /testbench/rv_core/mem_interface/size
-add wave -noupdate /testbench/rv_core/mem_interface/size_reg
-add wave -noupdate /testbench/rv_core/mem_interface/sign_reg
-add wave -noupdate /testbench/rv_core/mem_interface/maligns
-add wave -noupdate /testbench/rv_core/mem_interface/read
-add wave -noupdate /testbench/rv_core/mem_interface/write
-add wave -noupdate /testbench/rv_core/mem_interface/byte_enable
-add wave -noupdate /testbench/rv_core/mem_interface/start_index
-add wave -noupdate /testbench/rv_core/mem_interface/end_index
-add wave -noupdate /testbench/rv_core/mem_interface/shift_data_in
-add wave -noupdate /testbench/rv_core/mem_interface/data
-add wave -noupdate /testbench/rv_core/mem_interface/shift_data_out
-add wave -noupdate /testbench/rv_core/mem_interface/sign_extend_data
-add wave -noupdate /testbench/rv_core/mem_interface/zero_extend_data
+add wave -noupdate /testbench/rv_core/int_ctl/breakpoint
+add wave -noupdate /testbench/rv_core/int_ctl/hit
+add wave -noupdate /testbench/rv_core/int_ctl/illegal
+add wave -noupdate /testbench/rv_core/int_ctl/ialign
+add wave -noupdate /testbench/rv_core/int_ctl/ecall
+add wave -noupdate /testbench/rv_core/int_ctl/ebreak
+add wave -noupdate /testbench/rv_core/int_ctl/malign
+add wave -noupdate /testbench/rv_core/int_ctl/ivec
+add wave -noupdate /testbench/rv_core/int_ctl/trap
+add wave -noupdate /testbench/rv_core/int_ctl/write_ir
+add wave -noupdate /testbench/rv_core/int_ctl/write_pc
+add wave -noupdate /testbench/rv_core/int_ctl/load_store
+add wave -noupdate /testbench/rv_core/int_ctl/load
+add wave -noupdate /testbench/rv_core/int_ctl/store
+add wave -noupdate /testbench/rv_core/int_ctl/inst
+add wave -noupdate /testbench/rv_core/int_ctl/inst_invalid
+add wave -noupdate /testbench/rv_core/int_ctl/inst_align
+add wave -noupdate /testbench/rv_core/int_ctl/env_call
+add wave -noupdate /testbench/rv_core/int_ctl/env_break
+add wave -noupdate /testbench/rv_core/int_ctl/ls_breakpoint
+add wave -noupdate /testbench/rv_core/int_ctl/l_align
+add wave -noupdate /testbench/rv_core/int_ctl/l_fault
+add wave -noupdate /testbench/rv_core/int_ctl/s_align
+add wave -noupdate /testbench/rv_core/int_ctl/s_fault
+add wave -noupdate /testbench/rv_core/int_ctl/inst_breakpoint
+add wave -noupdate /testbench/rv_core/int_ctl/inst_fault
+add wave -noupdate /testbench/rv_core/int_ctl/sync_ex
+add wave -noupdate /testbench/rv_core/int_ctl/mcause
 TreeUpdate [SetDefaultTree]
-WaveRestoreCursors {{Cursor 1} {1463 ps} 0}
+WaveRestoreCursors {{Cursor 1} {10785 ps} 0}
 quietly wave cursor active 1
-configure wave -namecolwidth 381
+configure wave -namecolwidth 420
 configure wave -valuecolwidth 100
 configure wave -justifyvalue left
 configure wave -signalnamewidth 0
@@ -126,4 +129,3 @@ radix define MCP {
 	"5'b11100" "SYSTEM"
     -default hex
  }
- 

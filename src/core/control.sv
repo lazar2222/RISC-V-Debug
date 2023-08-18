@@ -57,25 +57,18 @@ module control (
     end
 
     always_comb begin
-        control_signals.check_mem    = 1'b0;
-        control_signals.check_inst   = 1'b0;
-        control_signals.check_ialign = 1'b0;
-        control_signals.check_csr    = 1'b0;
+        control_signals.store        = 1'b0;
         control_signals.write_pc     = 1'b0;
         control_signals.write_rd     = 1'b0;
         control_signals.write_csr    = 1'b0;
         control_signals.mem_read     = 1'b0;
         control_signals.mem_write    = 1'b0;
-        control_signals.addr_sel     = ADDR_ALU;
+        control_signals.addr_sel     = ADDR_PC;
         control_signals.rd_sel       = RD_ALU;
         control_signals.alu_insel1   = ALU1_RS;
         control_signals.alu_insel2   = ALU2_RS;
         case (mcp_addr)
             PROLOGUE: begin
-                control_signals.addr_sel = ADDR_PC;
-                control_signals.mem_read = 1'b1;
-            end
-            DISPATCH: begin
                 control_signals.addr_sel = ADDR_PC;
                 control_signals.mem_read = 1'b1;
             end
@@ -157,6 +150,7 @@ module control (
                 control_signals.mem_write  = 1'b1;
             end
             STORE_1: begin
+                control_signals.store    = 1'b1;
                 control_signals.write_pc = 1'b1;
                 control_signals.addr_sel = ADDR_PC;
                 control_signals.mem_read = 1'b1;

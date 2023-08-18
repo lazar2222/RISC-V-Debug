@@ -922,10 +922,10 @@ assign hit = address == `CSR__``csr`` ? 1'b1 : 1'bz;                            
 csr_interface.``csr``_reg <= `CSR__``csr``_VALUE; \
 
 `define CSRGEN__GENERATE_WRITE(csr) \
-if (address == `CSR__``csr`` && write_reg) begin \
-    csr_interface.``csr``_reg <= (value & `CSR__``csr``_MASK) | (csr_interface.``csr``_reg & ~`CSR__``csr``_MASK); \
-end else if (csr_interface.``csr``_write) begin                                                                    \
+if (csr_interface.``csr``_write) begin                                                                             \
     csr_interface.``csr``_reg <= csr_interface.``csr``_in;                                                         \
+end else if (address == `CSR__``csr`` && write_reg) begin                                                          \
+    csr_interface.``csr``_reg <= (value & `CSR__``csr``_MASK) | (csr_interface.``csr``_reg & ~`CSR__``csr``_MASK); \
 end                                                                                                                \
 
 `endif
