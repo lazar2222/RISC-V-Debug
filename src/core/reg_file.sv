@@ -1,8 +1,8 @@
 `include "isa.svh"
 
 module reg_file #(
-    parameter int Width = `ISA__XLEN,
-    parameter int Depth = `ISA__RNUM
+    parameter int Width,
+    parameter int Depth
 ) (
     input clk,
     input rst_n,

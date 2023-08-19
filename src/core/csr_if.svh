@@ -4,7 +4,8 @@
 `include "csr.svh"
 
 interface csr_if;
-    `CSRGEN__FOREACH(CSRGEN__GENERATE_INTERFACE)
+    `CSRGEN__FOREACH_MCOUNTER(CSRGEN__GENERATE_INTERFACE)
+    `CSRGEN__FOREACH_MRW(CSRGEN__GENERATE_INTERFACE)
 endinterface
 
-`endif
+`endif  //CSR_IF__SVH

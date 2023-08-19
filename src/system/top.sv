@@ -2,58 +2,39 @@
 `include "system.svh"
 
 module top (
-    input CLOCK_50,
+    input clock_50,
 
-    input [3:0] KEY,
+    input [3:0] key,
 
-    input [9:0] SW,
+    input [9:0] sw,
 
-    output [9:0] LED,
+    output [9:0] led,
 
-    output [6:0] HEX0,
-    output [6:0] HEX1,
-    output [6:0] HEX2,
-    output [6:0] HEX3,
-    output [6:0] HEX4,
-    output [6:0] HEX5,
+    output [6:0] hex0,
+    output [6:0] hex1,
+    output [6:0] hex2,
+    output [6:0] hex3,
+    output [6:0] hex4,
+    output [6:0] hex5,
 
-    output [12:0] DRAM_ADDR,
-    output [ 1:0] DRAM_BA,
-    output        DRAM_CLK,
-    output        DRAM_CKE,
-    output        DRAM_RAS_N,
-    output        DRAM_CAS_N,
-    output        DRAM_CS_N,
-    output        DRAM_WE_N,
-    output        DRAM_LDQM,
-    output        DRAM_UDQM,
-    inout  [15:0] DRAM_DQ,
-
-    output       VGA_CLK,
-    output       VGA_HS,
-    output       VGA_VS,
-    output       VGA_SYNC_N,
-    output       VGA_BLANK_N,
-    output [7:0] VGA_R,
-    output [7:0] VGA_G,
-    output [7:0] VGA_B,
-
-    output AUD_XCK,
-    output AUD_BCLK,
-    output AUD_DACLRCK,
-    output AUD_DACDAT,
-    output I2C_SCLK,
-    inout  I2C_SDAT,
-
-    inout PS2_CLK1,
-    inout PS2_DAT1,
-    inout PS2_CLK2,
-    inout PS2_DAT2,
-
-    inout [35:0] GPIO
+    inout [35:0] gpio
 );
-    wire clk = CLOCK_50;
-    wire rst_n = KEY[0];
+    wire clk   = clock_50;
+    wire power = key[0];
+    wire nmi   = !key[1];
+    wire exti  = !key[2];
+
+    wire rst_n;
+
+    por #(
+        .Cycles(50_000_000)
+    ) por_inst (
+        .clk  (clk),
+        .power(power),
+        .rst_n(rst_n)
+    );
+
+    assign led[0] = rst_n;
 
     arilla_bus_if #(
         .DataWidth       (`SYSTEM__XLEN),
@@ -61,12 +42,14 @@ module top (
         .ByteSize        (`SYSTEM__BLEN)
     ) bus_interface ();
 
-    assign bus_interface.available = 1'b1;
-    assign bus_interface.intercept = 1'b0;
+    assign bus_interface.inhibit   = sw[9];
+    assign bus_interface.intercept = sw[8];
 
     rv_core rv_core (
         .clk          (clk),
         .rst_n        (rst_n),
+        .nmi          (nmi),
+        .exti         (exti),
         .bus_interface(bus_interface)
     );
 

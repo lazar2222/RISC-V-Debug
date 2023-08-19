@@ -1,7 +1,7 @@
 `include "isa.svh"
 
 module alu #(
-    parameter int Width = `ISA__XLEN
+    parameter int Width
 ) (
     input [Width-1:0] a,
     input [Width-1:0] b,

@@ -1,6 +1,22 @@
 `include "control_signals_if.svh"
 `include "isa.svh"
 
+`define CONTROL__READ_INST   control_signals.addr_sel = `CONTROL_SIGNALS__ADDR_PC; \
+                             control_signals.mem_read = 1'b1;
+
+`define CONTROL__NEXT_INST   control_signals.write_pc = 1'b1; \
+                             `CONTROL__READ_INST
+
+`define CONTROL__ALU_ADDRESS control_signals.alu_insel1 = `CONTROL_SIGNALS__ALU1_RS; \
+                             control_signals.alu_insel2 = `CONTROL_SIGNALS__ALU2_IM; \
+                             control_signals.addr_sel   = `CONTROL_SIGNALS__ADDR_ALU;
+
+`define CONTROL__WRITE_ALU   control_signals.rd_sel     = `CONTROL_SIGNALS__RD_ALU; \
+                             control_signals.write_rd   = 1'b1;
+
+`define CONTROL__WRITE_MEM   control_signals.rd_sel     = `CONTROL_SIGNALS__RD_MEM; \
+                             control_signals.write_rd   = 1'b1;
+
 module control (
     input clk,
     input rst_n,
@@ -25,19 +41,7 @@ module control (
     localparam logic [`ISA__OPCODE_WIDTH-1:0] MISCMEM  = `ISA__OPCODE_MISCMEM;
     localparam logic [`ISA__OPCODE_WIDTH-1:0] SYSTEM   = `ISA__OPCODE_SYSTEM;
 
-    localparam logic       ADDR_ALU = 1'b0;
-    localparam logic       ADDR_PC  = 1'b1;
-    localparam logic [1:0] RD_ALU   = 2'b00;
-    localparam logic [1:0] RD_MEM   = 2'b10;
-    localparam logic [1:0] RD_CSR   = 2'b11;
-    localparam logic [1:0] ALU1_RS  = 2'b00;
-    localparam logic [1:0] ALU1_PC  = 2'b01;
-    localparam logic [1:0] ALU1_ZR  = 2'b11;
-    localparam logic [1:0] ALU2_RS  = 2'b00;
-    localparam logic [1:0] ALU2_IM  = 2'b01;
-    localparam logic [1:0] ALU2_IS  = 2'b11;
-
-    reg [4:0] mcp_reg, mcp_next, mcp_addr;
+    reg [`ISA__OPCODE_WIDTH-1:0] mcp_reg, mcp_next, mcp_addr;
 
     always @(posedge clk) begin
         if (!rst_n) begin
@@ -47,8 +51,6 @@ module control (
         end
     end
 
-    assign control_signals.write_ir = !(mcp_reg == LOAD_1 || mcp_reg == STORE_1 || mcp_reg == PROLOGUE || mcp_reg == LOAD_W || mcp_reg == STORE_W);
-
     always_comb begin
         mcp_addr = mcp_reg;
         if (mcp_reg == DISPATCH) begin
@@ -56,139 +58,88 @@ module control (
         end
     end
 
+    assign control_signals.write_ir = !
+        (  mcp_reg == PROLOGUE
+        || mcp_reg == LOAD_W
+        || mcp_reg == LOAD_1
+        || mcp_reg == STORE_W
+        || mcp_reg == STORE_1
+        );
+
+    assign control_signals.load_op = mcp_reg == LOAD_1;
+
     always_comb begin
-        control_signals.store        = 1'b0;
-        control_signals.write_pc     = 1'b0;
-        control_signals.write_rd     = 1'b0;
-        control_signals.write_csr    = 1'b0;
-        control_signals.mem_read     = 1'b0;
-        control_signals.mem_write    = 1'b0;
-        control_signals.addr_sel     = ADDR_PC;
-        control_signals.rd_sel       = RD_ALU;
-        control_signals.alu_insel1   = ALU1_RS;
-        control_signals.alu_insel2   = ALU2_RS;
+        control_signals.write_pc   = 1'b0;
+        control_signals.write_rd   = 1'b0;
+        control_signals.write_csr  = 1'b0;
+        control_signals.mem_read   = 1'b0;
+        control_signals.mem_write  = 1'b0;
+        control_signals.addr_sel   = `CONTROL_SIGNALS__ADDR_PC;
+        control_signals.rd_sel     = `CONTROL_SIGNALS__RD_ALU;
+        control_signals.alu_insel1 = `CONTROL_SIGNALS__ALU1_RS;
+        control_signals.alu_insel2 = `CONTROL_SIGNALS__ALU2_RS;
         case (mcp_addr)
             PROLOGUE: begin
-                control_signals.addr_sel = ADDR_PC;
-                control_signals.mem_read = 1'b1;
+                `CONTROL__READ_INST
             end
             LUI: begin
-                control_signals.alu_insel1 = ALU1_ZR;
-                control_signals.alu_insel2 = ALU2_IM;
-                control_signals.rd_sel     = RD_ALU;
-                control_signals.write_rd   = 1'b1;
+                control_signals.alu_insel1 = `CONTROL_SIGNALS__ALU1_ZR;
+                control_signals.alu_insel2 = `CONTROL_SIGNALS__ALU2_IM;
+                `CONTROL__WRITE_ALU
 
-                control_signals.write_pc = 1'b1;
-                control_signals.addr_sel = ADDR_PC;
-                control_signals.mem_read = 1'b1;
+                `CONTROL__NEXT_INST
             end
             AUIPC: begin
-                control_signals.alu_insel1 = ALU1_PC;
-                control_signals.alu_insel2 = ALU2_IM;
-                control_signals.rd_sel     = RD_ALU;
-                control_signals.write_rd   = 1'b1;
+                control_signals.alu_insel1 = `CONTROL_SIGNALS__ALU1_PC;
+                control_signals.alu_insel2 = `CONTROL_SIGNALS__ALU2_IM;
+                `CONTROL__WRITE_ALU
 
-                control_signals.write_pc = 1'b1;
-                control_signals.addr_sel = ADDR_PC;
-                control_signals.mem_read = 1'b1;
+                `CONTROL__NEXT_INST
             end
-            JAL: begin
-                control_signals.alu_insel1 = ALU1_PC;
-                control_signals.alu_insel2 = ALU2_IS;
-                control_signals.rd_sel     = RD_ALU;
-                control_signals.write_rd   = 1'b1;
+            JAL, JALR: begin
+                control_signals.alu_insel1 = `CONTROL_SIGNALS__ALU1_PC;
+                control_signals.alu_insel2 = `CONTROL_SIGNALS__ALU2_IS;
+                `CONTROL__WRITE_ALU
 
-                control_signals.write_pc = 1'b1;
-                control_signals.addr_sel = ADDR_PC;
-                control_signals.mem_read = 1'b1;
+                `CONTROL__NEXT_INST
             end
-            JALR: begin
-                control_signals.alu_insel1 = ALU1_PC;
-                control_signals.alu_insel2 = ALU2_IS;
-                control_signals.rd_sel     = RD_ALU;
-                control_signals.write_rd   = 1'b1;
-
-                control_signals.write_pc = 1'b1;
-                control_signals.addr_sel = ADDR_PC;
-                control_signals.mem_read = 1'b1;
+            BRANCH, STORE_1, MISCMEM: begin
+                `CONTROL__NEXT_INST
             end
-            BRANCH: begin
-                control_signals.write_pc = 1'b1;
-                control_signals.addr_sel = ADDR_PC;
-                control_signals.mem_read = 1'b1;
-            end
-            LOAD: begin
-                control_signals.alu_insel1 = ALU1_RS;
-                control_signals.alu_insel2 = ALU2_IM;
-                control_signals.addr_sel   = ADDR_ALU;
-                control_signals.mem_read   = 1'b1;
-            end
-            LOAD_W: begin
-                control_signals.alu_insel1 = ALU1_RS;
-                control_signals.alu_insel2 = ALU2_IM;
-                control_signals.addr_sel   = ADDR_ALU;
+            LOAD, LOAD_W: begin
+                `CONTROL__ALU_ADDRESS
                 control_signals.mem_read   = 1'b1;
             end
             LOAD_1: begin
-                control_signals.rd_sel   = RD_MEM;
-                control_signals.write_rd = 1'b1;
+                `CONTROL__WRITE_MEM
 
-                control_signals.write_pc = 1'b1;
-                control_signals.addr_sel = ADDR_PC;
-                control_signals.mem_read = 1'b1;
+                `CONTROL__NEXT_INST
             end
-            STORE: begin
-                control_signals.alu_insel1 = ALU1_RS;
-                control_signals.alu_insel2 = ALU2_IM;
-                control_signals.addr_sel   = ADDR_ALU;
+            STORE, STORE_W: begin
+                `CONTROL__ALU_ADDRESS
                 control_signals.mem_write  = 1'b1;
-            end
-            STORE_W: begin
-                control_signals.alu_insel1 = ALU1_RS;
-                control_signals.alu_insel2 = ALU2_IM;
-                control_signals.addr_sel   = ADDR_ALU;
-                control_signals.mem_write  = 1'b1;
-            end
-            STORE_1: begin
-                control_signals.store    = 1'b1;
-                control_signals.write_pc = 1'b1;
-                control_signals.addr_sel = ADDR_PC;
-                control_signals.mem_read = 1'b1;
             end
             OPIMM: begin
-                control_signals.alu_insel1 = ALU1_RS;
-                control_signals.alu_insel2 = ALU2_IM;
-                control_signals.rd_sel = RD_ALU;
-                control_signals.write_rd = 1'b1;
+                control_signals.alu_insel1 = `CONTROL_SIGNALS__ALU1_RS;
+                control_signals.alu_insel2 = `CONTROL_SIGNALS__ALU2_IM;
+                `CONTROL__WRITE_ALU
 
-                control_signals.write_pc = 1'b1;
-                control_signals.addr_sel = ADDR_PC;
-                control_signals.mem_read = 1'b1;
+                `CONTROL__NEXT_INST
             end
             OP: begin
-                control_signals.alu_insel1 = ALU1_RS;
-                control_signals.alu_insel2 = ALU2_RS;
-                control_signals.rd_sel = RD_ALU;
-                control_signals.write_rd = 1'b1;
+                control_signals.alu_insel1 = `CONTROL_SIGNALS__ALU1_RS;
+                control_signals.alu_insel2 = `CONTROL_SIGNALS__ALU2_RS;
+                `CONTROL__WRITE_ALU
 
-                control_signals.write_pc = 1'b1;
-                control_signals.addr_sel = ADDR_PC;
-                control_signals.mem_read = 1'b1;
-            end
-            MISCMEM: begin
-                control_signals.write_pc = 1'b1;
-                control_signals.addr_sel = ADDR_PC;
-                control_signals.mem_read = 1'b1;
+                `CONTROL__NEXT_INST
             end
             SYSTEM: begin
                 if (control_signals.f3 != `ISA__FUNCT3_ECALL) begin
-                    control_signals.rd_sel    = RD_CSR;
-                    control_signals.write_csr = 1'b1;
+                    control_signals.rd_sel    = `CONTROL_SIGNALS__RD_CSR;
                     control_signals.write_rd  = 1'b1;
+                    control_signals.write_csr = 1'b1;
                 end
-                control_signals.write_pc = 1'b1;
-                control_signals.addr_sel = ADDR_PC;
-                control_signals.mem_read = 1'b1;
+                `CONTROL__NEXT_INST
             end
             default: begin
             end
@@ -197,23 +148,23 @@ module control (
 
     always_comb begin
         case (mcp_addr)
-            PROLOGUE: mcp_next = control_signals.mem_complete_read  ? DISPATCH : PROLOGUE;
-            LUI:      mcp_next = control_signals.mem_complete_read  ? DISPATCH : PROLOGUE;
-            AUIPC:    mcp_next = control_signals.mem_complete_read  ? DISPATCH : PROLOGUE;
-            JAL:      mcp_next = control_signals.mem_complete_read  ? DISPATCH : PROLOGUE;
-            JALR:     mcp_next = control_signals.mem_complete_read  ? DISPATCH : PROLOGUE;
-            BRANCH:   mcp_next = control_signals.mem_complete_read  ? DISPATCH : PROLOGUE;
-            LOAD:     mcp_next = control_signals.mem_complete_read  ? LOAD_1   : LOAD_W;
-            LOAD_W:   mcp_next = control_signals.mem_complete_read  ? LOAD_1   : LOAD_W;
-            LOAD_1:   mcp_next = control_signals.mem_complete_read  ? DISPATCH : PROLOGUE;
-            STORE:    mcp_next = control_signals.mem_complete_write ? STORE_1  : STORE_W;
-            STORE_W:  mcp_next = control_signals.mem_complete_write ? STORE_1  : STORE_W;
-            STORE_1:  mcp_next = control_signals.mem_complete_read  ? DISPATCH : PROLOGUE;
-            OPIMM:    mcp_next = control_signals.mem_complete_read  ? DISPATCH : PROLOGUE;
-            OP:       mcp_next = control_signals.mem_complete_read  ? DISPATCH : PROLOGUE;
-            MISCMEM:  mcp_next = control_signals.mem_complete_read  ? DISPATCH : PROLOGUE;
-            SYSTEM:   mcp_next = control_signals.mem_complete_read  ? DISPATCH : PROLOGUE;
-            default:  mcp_next = mcp_addr + 5'd1;
+            PROLOGUE,
+            LUI,
+            AUIPC,
+            JAL,
+            JALR,
+            BRANCH,
+            OPIMM,
+            OP,
+            MISCMEM,
+            SYSTEM,
+            LOAD_1,
+            STORE_1: mcp_next = control_signals.mem_complete ? DISPATCH : PROLOGUE;
+            LOAD,
+            LOAD_W:  mcp_next = control_signals.mem_complete ? LOAD_1   : LOAD_W;
+            STORE,
+            STORE_W: mcp_next = control_signals.mem_complete ? STORE_1  : STORE_W;
+            default: mcp_next = mcp_addr + 5'd1;
         endcase
     end
 endmodule

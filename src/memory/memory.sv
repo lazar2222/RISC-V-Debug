@@ -1,10 +1,10 @@
 `include "../system/arilla_bus_if.svh"
 
 module memory #(
-    parameter int BaseAddress = 32'h0,
-    parameter int SizeBytes   = 65536,
-    parameter     InitFile    = "UNUSED",
-    parameter     Hint        = "UNUSED"
+    parameter int BaseAddress,
+    parameter int SizeBytes,
+    parameter     InitFile,
+    parameter     Hint
 ) (
     input clk,
     input rst_n,
@@ -30,8 +30,8 @@ module memory #(
 
     reg  read_hit;
     wire hit         = device_address == DeviceAddress;
+    wire write_hit   = hit && bus_interface.write;
     wire data_enable = read_hit && !bus_interface.intercept;
-    wire data_write  = hit && bus_interface.write;
 
     assign bus_interface.hit      = hit         ? 1'b1     : 1'bz;
     assign bus_interface.data_ptc = data_enable ? data_out : {DataWidth{1'bz}};
@@ -61,13 +61,13 @@ module memory #(
         .intended_device_family       ("Cyclone V"),
         .operation_mode               ("SINGLE_PORT"),
         .power_up_uninitialized       ("FALSE")
-    ) altsyncram_component (
+    ) altsyncram (
         .clock0        (clk),
         .data_a        (data_in),
         .q_a           (data_out),
         .address_a     (local_address),
         .byteena_a     (byte_enable),
-        .wren_a        (data_write),
+        .wren_a        (write_hit),
         .rden_a        (1'b1),
         .addressstall_a(1'b0),
         .data_b        (1'b1),

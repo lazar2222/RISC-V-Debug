@@ -13,11 +13,10 @@ module inst_decode (
     output [`ISA__RFLEN-1:0] rs1,
     output [`ISA__RFLEN-1:0] rs2,
 
-    output reg [        `ISA__XLEN-1:0] imm,
     output     [        `ISA__XLEN-1:0] csri,
+    output reg [        `ISA__XLEN-1:0] imm,
     output reg [`ISA__FUNCT3_WIDTH-1:0] op,
     output reg                          mod,
-    output reg                          mul,
     output                              ecall,
     output                              ebreak
 );
@@ -99,7 +98,6 @@ module inst_decode (
 
     wire valid_funct7 =
         (  (f7 == `ISA__FUNCT7_ADD)
-        || (f7 == `ISA__FUNCT7_MUL && `ISA__MEXT)
         || (f7 == `ISA__FUNCT7_SUB && sub_or_sra)
         );
 
@@ -113,17 +111,19 @@ module inst_decode (
         );
 
     assign ecall =
-        (  f3 == `ISA__FUNCT3_ECALL
-        && rd == `ISA__RD_ECALL
+        (  opcode_system
+        && f3  == `ISA__FUNCT3_ECALL
+        && rd  == `ISA__RD_ECALL
         && rs1 == `ISA__RS1_ECALL
-        && ii == `ISA__IMM_ECALL
+        && ii  == `ISA__IMM_ECALL
         );
 
     assign ebreak =
-        (  f3 == `ISA__FUNCT3_ECALL
-        && rd == `ISA__RD_ECALL
+        (  opcode_system
+        && f3  == `ISA__FUNCT3_ECALL
+        && rd  == `ISA__RD_ECALL
         && rs1 == `ISA__RS1_ECALL
-        && ii == `ISA__IMM_EBREAK
+        && ii  == `ISA__IMM_EBREAK
         );
 
     wire invalid_jalr    = opcode_jalr    && !(f3 == `ISA__FUNCT3_JALR);
@@ -147,27 +147,27 @@ module inst_decode (
 
     always_comb begin
         case (opcode)
-            `ISA__OPCODE_LUI:     imm = ui;
-            `ISA__OPCODE_AUIPC:   imm = ui;
-            `ISA__OPCODE_JAL:     imm = ji;
-            `ISA__OPCODE_JALR:    imm = ii;
-            `ISA__OPCODE_BRANCH:  imm = bi;
-            `ISA__OPCODE_LOAD:    imm = ii;
-            `ISA__OPCODE_STORE:   imm = si;
-            `ISA__OPCODE_OPIMM:   imm = ii;
-            `ISA__OPCODE_MISCMEM: imm = ii;
-            `ISA__OPCODE_SYSTEM:  imm = ii;
-            default:              imm = {`ISA__XLEN{1'b0}};
+            `ISA__OPCODE_JALR,
+            `ISA__OPCODE_LOAD,
+            `ISA__OPCODE_OPIMM,
+            `ISA__OPCODE_MISCMEM,
+            `ISA__OPCODE_SYSTEM: imm = ii;
+            `ISA__OPCODE_LUI,
+            `ISA__OPCODE_AUIPC:  imm = ui;
+            `ISA__OPCODE_BRANCH: imm = bi;
+            `ISA__OPCODE_STORE:  imm = si;
+            `ISA__OPCODE_JAL:    imm = ji;
+            default:             imm = {`ISA__XLEN{1'b0}};
         endcase
         case (opcode)
-            `ISA__OPCODE_LUI:   begin op = `ISA__FUNCT3_ADD; mod =  1'b0; mul =  1'b0; end
-            `ISA__OPCODE_AUIPC: begin op = `ISA__FUNCT3_ADD; mod =  1'b0; mul =  1'b0; end
-            `ISA__OPCODE_JAL:   begin op = `ISA__FUNCT3_ADD; mod =  1'b0; mul =  1'b0; end
-            `ISA__OPCODE_JALR:  begin op = `ISA__FUNCT3_ADD; mod =  1'b0; mul =  1'b0; end
-            `ISA__OPCODE_LOAD:  begin op = `ISA__FUNCT3_ADD; mod =  1'b0; mul =  1'b0; end
-            `ISA__OPCODE_STORE: begin op = `ISA__FUNCT3_ADD; mod =  1'b0; mul =  1'b0; end
-            `ISA__OPCODE_OPIMM: begin op = f3;               mod =  1'b0; mul =  1'b0; end
-            default:            begin op = f3;               mod = f7[5]; mul = f7[0] && `ISA__MEXT; end
+            `ISA__OPCODE_LUI,
+            `ISA__OPCODE_AUIPC,
+            `ISA__OPCODE_JAL,
+            `ISA__OPCODE_JALR,
+            `ISA__OPCODE_LOAD,
+            `ISA__OPCODE_STORE: begin op = `ISA__FUNCT3_ADD; mod =  1'b0; end
+            `ISA__OPCODE_OPIMM: begin op = f3;               mod =  1'b0; end
+            default:            begin op = f3;               mod = f7[5]; end
         endcase
     end
 

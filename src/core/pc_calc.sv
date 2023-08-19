@@ -1,7 +1,7 @@
 `include "isa.svh"
 
-module alu_pc #(
-    parameter int Width = `ISA__XLEN
+module pc_calc #(
+    parameter int Width
 ) (
     input [Width-1:0] pc,
     input [Width-1:0] a,

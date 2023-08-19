@@ -5,8 +5,10 @@
 
 `define ISA__XLEN `SYSTEM__XLEN
 `define ISA__RNUM `SYSTEM__RNUM
-`define ISA__MEXT `SYSTEM__MEXT
 `define ISA__RVEC `SYSTEM__RVEC
+`define ISA__NMI  `SYSTEM__NMI
+`define ISA__TVEC `SYSTEM__TVEC
+`define ISA__VECT `SYSTEM__VECT
 
 `define ISA__RFLEN $clog2(`ISA__RNUM)
 `define ISA__INST_SIZE 32'd4
@@ -81,21 +83,12 @@
 `define ISA__FUNCT3_FENCE       3'b000
 `define ISA__FUNCT3_ECALL       3'b000
 `define ISA__FUNCT3_EBREAK      3'b000
-`define ISA__FUNCT3_MUL         3'b000
-`define ISA__FUNCT3_MULH        3'b001
-`define ISA__FUNCT3_MULHSU      3'b010
-`define ISA__FUNCT3_MULHU       3'b011
-`define ISA__FUNCT3_DIV         3'b100
-`define ISA__FUNCT3_DIVU        3'b101
-`define ISA__FUNCT3_REM         3'b110
-`define ISA__FUNCT3_REMU        3'b111
 `define ISA__FUNCT3_CSRRW       3'b001
 `define ISA__FUNCT3_CSRRS       3'b010
 `define ISA__FUNCT3_CSRRC       3'b011
 `define ISA__FUNCT3_CSRRWI      3'b101
 `define ISA__FUNCT3_CSRRSI      3'b110
 `define ISA__FUNCT3_CSRRCI      3'b111
-`define ISA__FUNCT3_SYSINV      3'b100
 
 `define ISA__FUNCT7_WIDTH       7
 `define ISA__FUNCT7_SLLI        7'b0000000
@@ -111,18 +104,10 @@
 `define ISA__FUNCT7_SRA         7'b0100000
 `define ISA__FUNCT7_OR          7'b0000000
 `define ISA__FUNCT7_AND         7'b0000000
-`define ISA__FUNCT7_MUL         7'b0000001
-`define ISA__FUNCT7_MULH        7'b0000001
-`define ISA__FUNCT7_MULHSU      7'b0000001
-`define ISA__FUNCT7_MULHU       7'b0000001
-`define ISA__FUNCT7_DIV         7'b0000001
-`define ISA__FUNCT7_DIVU        7'b0000001
-`define ISA__FUNCT7_REM         7'b0000001
-`define ISA__FUNCT7_REMU        7'b0000001
 
 `define ISA__RD_ECALL           5'b00000
 `define ISA__RS1_ECALL          5'b00000
 `define ISA__IMM_ECALL          32'd0
 `define ISA__IMM_EBREAK         32'd1
 
-`endif
+`endif  //ISA__SVH

@@ -15,35 +15,69 @@ module rv_core (
     control_signals_if control_signals ();
     csr_if             csr_interface   ();
 
-    wire [`ISA__XLEN-1:0] pc, alu_pc, next_pc, shadow_pc, ivec;
-    wire [`ISA__XLEN-1:0] ir;
-    wire [`ISA__XLEN-1:0] rs1, rs2, rd;
-    wire [`ISA__XLEN-1:0] mem_out, mem_addr;
-    wire [`ISA__XLEN-1:0] imm;
-    wire [`ISA__XLEN-1:0] csri;
-    wire [`ISA__XLEN-1:0] alu_in1;
-    wire [`ISA__XLEN-1:0] alu_in2;
+    wire [`ISA__XLEN-1:0] pc, shadow_pc, next_pc, alu_pc, trap_pc;
+    wire [`ISA__XLEN-1:0] ir, ir_in;
+    wire [`ISA__XLEN-1:0] rs1, rs2;
+    reg  [`ISA__XLEN-1:0] rd;
+    wire [`ISA__XLEN-1:0] mem_in, mem_out, mem_addr;
+    wire [`ISA__XLEN-1:0] csri, imm;
+    reg  [`ISA__XLEN-1:0] alu_in1, alu_in2;
     wire [`ISA__XLEN-1:0] alu_out;
-    wire [`ISA__XLEN-1:0] alum_out;
     wire [`ISA__XLEN-1:0] csr_out;
 
     wire [       `ISA__RFLEN-1:0] rs1_a, rs2_a, rd_a;
-    wire [`ISA__FUNCT3_WIDTH-1:0] op;
-    wire [`ISA__FUNCT3_WIDTH-1:0] f3;
     wire [`ISA__FUNCT3_WIDTH-1:0] mem_size;
+    wire [`ISA__FUNCT3_WIDTH-1:0] op;
 
-    wire mod, mul, ecall, ebreak, trap;
-    wire malign, ialign, invalid_inst, invalid_csr;
-    wire hit;
+    wire exception, interrupt;
+    wire trap;
+    wire ialign;
+    wire malign, fault;
+    wire invalid_inst, invalid_csr;
+    wire mod;
+    wire ecall, ebreak;
+    wire write_rd, write_csr, mem_read, mem_write;
 
-    assign mem_addr = control_signals.addr_sel      ? shadow_pc                                       : alu_out;
-    assign rd       = control_signals.rd_sel[1]     ? (control_signals.rd_sel[0] ? csr_out : mem_out) : (mul                           ? alum_out : alu_out);
-    assign alu_in1  = control_signals.alu_insel1[1] ? `ISA__ZERO                                      : (control_signals.alu_insel1[0] ? pc       : rs1);
-    assign alu_in2  = control_signals.alu_insel2[1] ? `ISA__INST_SIZE                                 : (control_signals.alu_insel2[0] ? imm      : rs2);
-    assign mem_size = control_signals.addr_sel      ? `ISA__INST_LOAD_SIZE                            : f3;
-    assign next_pc  = trap                          ? ivec                                            : alu_pc;
+    assign write_rd  = control_signals.write_rd  && !exception;
+    assign write_csr = control_signals.write_csr && !exception;
+    assign mem_read  = control_signals.mem_read  && !exception;
+    assign mem_write = control_signals.mem_write && !exception;
 
-    assign control_signals.f3 = f3;
+    assign trap = exception || interrupt;
+
+    assign ir_in  = mem_out;
+    assign mem_in = rs2;
+
+    assign next_pc  = trap                     ? trap_pc              : alu_pc;
+    assign mem_addr = control_signals.addr_sel ? shadow_pc            : alu_out;
+    assign mem_size = control_signals.addr_sel ? `ISA__INST_LOAD_SIZE : control_signals.f3;
+
+    always_comb begin
+        case (control_signals.rd_sel)
+            `CONTROL_SIGNALS__RD_ALU: rd = alu_out;
+            `CONTROL_SIGNALS__RD_MEM: rd = mem_out;
+            `CONTROL_SIGNALS__RD_CSR: rd = csr_out;
+            default:                  rd = alu_out;
+        endcase
+    end
+
+    always_comb begin
+        case (control_signals.alu_insel1)
+            `CONTROL_SIGNALS__ALU1_RS: alu_in1 = rs1;
+            `CONTROL_SIGNALS__ALU1_PC: alu_in1 = pc;
+            `CONTROL_SIGNALS__ALU1_ZR: alu_in1 = `ISA__ZERO;
+            default:                   alu_in1 = rs1;
+        endcase
+    end
+
+    always_comb begin
+        case (control_signals.alu_insel2)
+            `CONTROL_SIGNALS__ALU2_RS: alu_in2 = rs2;
+            `CONTROL_SIGNALS__ALU2_IM: alu_in2 = imm;
+            `CONTROL_SIGNALS__ALU2_IS: alu_in2 = `ISA__INST_SIZE;
+            default:                   alu_in2 = rs2;
+        endcase
+    end
 
     shadow_reg #(
         .Width     (`ISA__XLEN),
@@ -63,7 +97,7 @@ module rv_core (
     ) ir_reg (
         .clk       (clk),
         .rst_n     (rst_n),
-        .in        (mem_out),
+        .in        (ir_in),
         .write     (control_signals.write_ir),
         .shadow_out(ir)
     );
@@ -78,7 +112,7 @@ module rv_core (
         .rd_addr2(rs2_a),
         .wr_addr (rd_a),
         .wr_data (rd),
-        .wr_en   (control_signals.write_rd),
+        .wr_en   (write_rd),
         .rd_data1(rs1),
         .rd_data2(rs2)
     );
@@ -89,29 +123,27 @@ module rv_core (
         .bus_interface (bus_interface),
         .address       (mem_addr),
         .sign_size     (mem_size),
-        .rd            (control_signals.mem_read),
-        .wr            (control_signals.mem_write),
-        .data_in       (rs2),
+        .rd            (mem_read),
+        .wr            (mem_write),
+        .data_in       (mem_in),
         .data_out      (mem_out),
-        .malign_r      (malign),
-        .complete_read (control_signals.mem_complete_read),
-        .complete_write(control_signals.mem_complete_write),
-        .hit_r         (hit)
+        .complete      (control_signals.mem_complete),
+        .malign        (malign),
+        .fault         (fault)
     );
 
     inst_decode inst_decode (
         .inst        (ir),
         .invalid_inst(invalid_inst),
         .opcode      (control_signals.opcode),
-        .f3          (f3),
+        .f3          (control_signals.f3),
         .rd          (rd_a),
         .rs1         (rs1_a),
         .rs2         (rs2_a),
-        .imm         (imm),
         .csri        (csri),
+        .imm         (imm),
         .op          (op),
         .mod         (mod),
-        .mul         (mul),
         .ecall       (ecall),
         .ebreak      (ebreak)
     );
@@ -126,30 +158,15 @@ module rv_core (
         .c  (alu_out)
     );
 
-    generate
-        if (`ISA__MEXT) begin : g_alu_m
-            alu_m #(
-                .Width(`ISA__XLEN)
-            ) alu_m (
-                .a (rs1),
-                .b (rs2),
-                .f3(f3),
-                .c (alum_out)
-            );
-        end else begin : g_alu_m
-            assign alum_out = `ISA__ZERO;
-        end
-    endgenerate
-
-    alu_pc #(
+    pc_calc #(
         .Width(`ISA__XLEN)
-    ) alu_pc_i (
+    ) pc_calc (
         .pc     (pc),
         .a      (rs1),
         .b      (rs2),
         .imm    (imm),
         .opcode (control_signals.opcode),
-        .f3     (f3),
+        .f3     (control_signals.f3),
         .next_pc(alu_pc),
         .ialign (ialign)
     );
@@ -163,31 +180,33 @@ module rv_core (
     csr csr (
         .clk          (clk),
         .rst_n        (rst_n),
+        .csr_interface(csr_interface),
+        .bus_interface(bus_interface),
         .reg_in       (rs1),
         .imm_in       (csri),
         .addr         (imm),
         .rs           (rs1_a),
-        .f3           (f3),
-        .write        (control_signals.write_csr),
+        .f3           (control_signals.f3),
+        .write        (write_csr),
         .debug        (1'b0),
-        .reg_out      (csr_out),
-        .illegal      (invalid_csr),
-        .bus_interface(bus_interface),
-        .csr_interface(csr_interface)
+        .csr_out      (csr_out),
+        .invalid      (invalid_csr)
     );
 
     int_ctl int_ctl (
-        .ctrl      (control_signals),
-        .breakpoint(1'b0),
-        .hit       (hit),
-        .illegal   (invalid_inst || (invalid_csr && control_signals.write_csr)),
-        .ialign    (ialign),
-        .ecall     (ecall),
-        .ebreak    (ebreak),
-        .malign    (malign),
-        .csrs      (csr_interface),
-        .ivec      (ivec),
-        .trap      (trap)
+        .ctrl        (control_signals),
+        .csrs        (csr_interface),
+        .breakpoint  (1'b0),
+        .fault       (fault),
+        .invalid_inst(invalid_inst),
+        .invalid_csr (invalid_csr),
+        .ialign      (ialign),
+        .ecall       (ecall),
+        .ebreak      (ebreak),
+        .malign      (malign),
+        .tvec        (trap_pc),
+        .exception   (exception),
+        .interrupt   (interrupt)
     );
 
 endmodule

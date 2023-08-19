@@ -10,10 +10,9 @@ module mem_interface (
     wr,
     data_in,
     data_out,
-    malign_r,
-    complete_read,
-    complete_write,
-    hit_r
+    complete,
+    malign,
+    fault
 );
     localparam int DataWidth        = $bits(bus_interface.data_ctp);
     localparam int WordAddressWidth = $bits(bus_interface.address);
@@ -36,50 +35,41 @@ module mem_interface (
     input  [DataWidth-1:0] data_in;
     output [DataWidth-1:0] data_out;
 
-    output complete_read;
-    output complete_write;
-    output reg malign_r;
-    output reg hit_r;
+    output complete;
+    output reg malign;
+    output reg fault;
 
-    reg  [          SizeSize:0] sign_size_reg;
-    reg  [ByteAddressWidth-1:0] address_reg;
+    reg [ByteAddressWidth-1:0] address_reg;
+    reg [        SizeSize-1:0] size_reg;
+    reg                        sign_reg;
 
-    wire [        SizeSize-1:0] size     = sign_size[SizeSize-1:0];
-    wire [        SizeSize-1:0] size_reg = sign_size_reg[SizeSize-1:0];
-    wire                        sign_reg = sign_size_reg[SizeSize];
+    wire [SizeSize-1:0] size = sign_size[SizeSize-1:0];
+    wire [   MaxSize:0] maligns;
 
-    wire [MaxSize:0] maligns;
-
+    assign maligns[0] = 1'b0;
     genvar i;
     generate
         for (i = 1; i <= MaxSize; i++) begin : g_maligns
             assign maligns[i] = address[i-1:0] != {i{1'b0}};
         end
     endgenerate
-
-    assign maligns[0] = 1'b0;
-    wire   malign     = size > MaxSize || maligns[size];
-
-    wire  hit  = bus_interface.hit;
-    wire read  = bus_interface.available && rd && !malign && hit;
-    wire write = bus_interface.available && wr && !malign && hit;
+    wire malign_w = size > MaxSize || maligns[size];
 
     always @(posedge clk) begin
         if (!rst_n) begin
-            sign_size_reg <= {MaxSize + 1{1'b0}};
-            address_reg   <= {ByteAddressWidth{1'b0}};
-            malign_r      <= 1'b0;
-            hit_r         <= 1'b0;
+            address_reg <= {ByteAddressWidth{1'b0}};
+            size_reg    <= {MaxSize{1'b0}};
+            sign_reg    <= 1'b0;
+            malign      <= 1'b0;
+            fault       <= 1'b0;
         end else begin
-            sign_size_reg <= sign_size;
-            address_reg   <= address;
-            malign_r      <= malign;
-            hit_r         <= hit;
+            address_reg <= address;
+            size_reg    <= size;
+            sign_reg    <= sign_size[SizeSize-1];
+            malign      <= malign_w;
+            fault       <= !bus_interface.hit;
         end
     end
-
-    assign complete_read  = bus_interface.available && rd;
-    assign complete_write = bus_interface.available && wr;
 
     wire [BytesPerWord-1:0] byte_enable;
     wire [     MaxSize-1:0] start_index   = address[MaxSize-1:0];
@@ -93,11 +83,14 @@ module mem_interface (
         end
     endgenerate
 
-    assign bus_interface.data_ctp    = bus_interface.available ? shift_data_in : {DataWidth{1'bz}};
-    assign bus_interface.address     = bus_interface.available ? address[ByteAddressWidth-1:MaxSize] : {WordAddressWidth{1'bz}};
-    assign bus_interface.byte_enable = bus_interface.available ? byte_enable : {BytesPerWord{1'bz}};
-    assign bus_interface.read        = bus_interface.available ? read : 1'bz;
-    assign bus_interface.write       = bus_interface.available ? write : 1'bz;
+    wire valid = !malign_w && bus_interface.hit;
+
+    assign bus_interface.data_ctp    = !bus_interface.inhibit ? shift_data_in : {DataWidth{1'bz}};
+    assign bus_interface.address     = !bus_interface.inhibit ? address[ByteAddressWidth-1:MaxSize] : {WordAddressWidth{1'bz}};
+    assign bus_interface.byte_enable = !bus_interface.inhibit ? byte_enable : {BytesPerWord{1'bz}};
+    assign bus_interface.read        = !bus_interface.inhibit ? valid && rd : 1'bz;
+    assign bus_interface.write       = !bus_interface.inhibit ? valid && wr : 1'bz;
+    assign complete                  = !bus_interface.inhibit && (rd || wr);
 
     wire [DataWidth-1:0] data           = bus_interface.data_ptc;
     wire [DataWidth-1:0] shift_data_out = data >> (address_reg[MaxSize-1:0] * ByteSize);

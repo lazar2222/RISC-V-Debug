@@ -1,6 +1,6 @@
 module shadow_reg #(
-    parameter int Width      = 32,
-    parameter int ResetValue = 32'd0
+    parameter int Width,
+    parameter int ResetValue
 ) (
     input clk,
     input rst_n,
@@ -17,8 +17,10 @@ module shadow_reg #(
     always @(posedge clk) begin
         if (!rst_n) begin
             out <= ResetValue;
-        end else if (write) begin
-            out <= in;
+        end else begin
+            if (write) begin
+                out <= in;
+            end
         end
     end
 
