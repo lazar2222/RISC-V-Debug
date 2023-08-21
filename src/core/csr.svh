@@ -102,7 +102,6 @@
 `define CSR__MCAUSE_TIMER        {1'b1,31'd7}
 `define CSR__MCAUSE_EXTI         {1'b1,31'd11}
 `define CSR__MCAUSE_NMI          {1'b1,31'd0}
-`define CSR__MCAUSE_RESET        {1'b0,31'd0}
 `define CSR__MCAUSE_INST_MALIGN  32'd0
 `define CSR__MCAUSE_INST_FAULT   32'd1
 `define CSR__MCAUSE_INST_INVALID 32'd2
@@ -198,10 +197,13 @@ assign hit     = address == `CSR__``csr``(i) ? 1'b1 : 1'bz;                     
 csr_interface.``csr``_reg <= `CSR__``csr``_VALUE; \
 
 `define CSRGEN__GENERATE_WRITE(csr) \
-if (address == `CSR__``csr`` && write_reg) begin                                                                   \
+if (address == `CSR__``csr`` && write_reg && `CSR__``csr``_MASK != `ISA__ZERO) begin                                                                   \
     csr_interface.``csr``_reg <= (value & `CSR__``csr``_MASK) | (csr_interface.``csr``_reg & ~`CSR__``csr``_MASK); \
 end else if (csr_interface.``csr``_write) begin                                                                    \
     csr_interface.``csr``_reg <= csr_interface.``csr``_in;                                                         \
 end                                                                                                                \
+
+`define CSRGEN__GENERATE_CONFLICT(csr) \
+assign conflict = (address == `CSR__``csr`` && write_reg && `CSR__``csr``_MASK != `ISA__ZERO) ? 1'b1 : 1'bz; \
 
 `endif  //CSR__SVH

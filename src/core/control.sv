@@ -21,6 +21,8 @@ module control (
     input clk,
     input rst_n,
 
+    input exception,
+
     control_signals_if control_signals
 );
     localparam logic [`ISA__OPCODE_WIDTH-1:0] PROLOGUE = 5'b10_000;
@@ -144,6 +146,12 @@ module control (
             default: begin
             end
         endcase
+        if (exception) begin
+            control_signals.write_rd  = 1'b0;
+            control_signals.write_csr = 1'b0;
+            control_signals.mem_write = 1'b0;
+            `CONTROL__NEXT_INST
+        end
     end
 
     always_comb begin
@@ -166,5 +174,8 @@ module control (
             STORE_W: mcp_next = control_signals.mem_complete ? STORE_1  : STORE_W;
             default: mcp_next = mcp_addr + 5'd1;
         endcase
+        if (exception) begin
+            mcp_next = control_signals.mem_complete ? DISPATCH : PROLOGUE;
+        end
     end
 endmodule

@@ -12,7 +12,8 @@ module mem_interface (
     data_out,
     complete,
     malign,
-    fault
+    fault,
+    address_reg
 );
     localparam int DataWidth        = $bits(bus_interface.data_ctp);
     localparam int WordAddressWidth = $bits(bus_interface.address);
@@ -35,11 +36,11 @@ module mem_interface (
     input  [DataWidth-1:0] data_in;
     output [DataWidth-1:0] data_out;
 
-    output complete;
-    output reg malign;
-    output reg fault;
+    output                            complete;
+    output reg                        malign;
+    output reg                        fault;
+    output reg [ByteAddressWidth-1:0] address_reg;
 
-    reg [ByteAddressWidth-1:0] address_reg;
     reg [        SizeSize-1:0] size_reg;
     reg                        sign_reg;
 

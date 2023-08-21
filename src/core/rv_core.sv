@@ -20,6 +20,7 @@ module rv_core (
     wire [`ISA__XLEN-1:0] rs1, rs2;
     reg  [`ISA__XLEN-1:0] rd;
     wire [`ISA__XLEN-1:0] mem_in, mem_out, mem_addr;
+    reg  [`ISA__XLEN-1:0] mem_addr_reg;
     wire [`ISA__XLEN-1:0] csri, imm;
     reg  [`ISA__XLEN-1:0] alu_in1, alu_in2;
     wire [`ISA__XLEN-1:0] alu_out;
@@ -29,21 +30,18 @@ module rv_core (
     wire [`ISA__FUNCT3_WIDTH-1:0] mem_size;
     wire [`ISA__FUNCT3_WIDTH-1:0] op;
 
-    wire exception, interrupt;
+    wire exception, interrupt, mret;
     wire trap;
     wire ialign;
     wire malign, fault;
     wire invalid_inst, invalid_csr;
     wire mod;
     wire ecall, ebreak;
-    wire write_rd, write_csr, mem_read, mem_write;
+    wire retire;
+    wire conflict;
 
-    assign write_rd  = control_signals.write_rd  && !exception;
-    assign write_csr = control_signals.write_csr && !exception;
-    assign mem_read  = control_signals.mem_read  && !exception;
-    assign mem_write = control_signals.mem_write && !exception;
-
-    assign trap = exception || interrupt;
+    assign retire = control_signals.write_pc  && !exception;
+    assign trap   = exception || interrupt || mret;
 
     assign ir_in  = mem_out;
     assign mem_in = rs2;
@@ -112,7 +110,7 @@ module rv_core (
         .rd_addr2(rs2_a),
         .wr_addr (rd_a),
         .wr_data (rd),
-        .wr_en   (write_rd),
+        .wr_en   (control_signals.write_rd),
         .rd_data1(rs1),
         .rd_data2(rs2)
     );
@@ -123,13 +121,14 @@ module rv_core (
         .bus_interface (bus_interface),
         .address       (mem_addr),
         .sign_size     (mem_size),
-        .rd            (mem_read),
-        .wr            (mem_write),
+        .rd            (control_signals.mem_read),
+        .wr            (control_signals.mem_write),
         .data_in       (mem_in),
         .data_out      (mem_out),
         .complete      (control_signals.mem_complete),
         .malign        (malign),
-        .fault         (fault)
+        .fault         (fault),
+        .address_reg   (mem_addr_reg)
     );
 
     inst_decode inst_decode (
@@ -187,15 +186,20 @@ module rv_core (
         .addr         (imm),
         .rs           (rs1_a),
         .f3           (control_signals.f3),
-        .write        (write_csr),
+        .write        (control_signals.write_csr),
         .debug        (1'b0),
+        .retire       (retire),
         .csr_out      (csr_out),
-        .invalid      (invalid_csr)
+        .invalid      (invalid_csr),
+        .conflict     (conflict)
     );
 
     int_ctl int_ctl (
         .ctrl        (control_signals),
         .csrs        (csr_interface),
+        .nmi         (nmi),
+        .exti        (exti),
+        .timer       (1'b0),
         .breakpoint  (1'b0),
         .fault       (fault),
         .invalid_inst(invalid_inst),
@@ -204,6 +208,12 @@ module rv_core (
         .ecall       (ecall),
         .ebreak      (ebreak),
         .malign      (malign),
+        .mret        (mret),
+        .conflict    (conflict),
+        .pc          (pc),
+        .next_pc     (next_pc),
+        .mem_addr    (mem_addr_reg),
+        .ir          (ir),
         .tvec        (trap_pc),
         .exception   (exception),
         .interrupt   (interrupt)

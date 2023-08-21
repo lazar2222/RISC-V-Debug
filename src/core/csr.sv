@@ -18,9 +18,11 @@ module csr (
 
     input write,
     input debug,
+    input retire,
 
     output tri0 [`ISA__XLEN-1:0] csr_out,
-    output                       invalid
+    output                       invalid,
+    output tri0                  conflict
 );
     wire [`CSR__ALEN-1:0] address     = addr[`CSR__ALEN-1:0];
     wire [`ISA__XLEN-1:0] mask        = f3[2] ? imm_in : reg_in;
@@ -42,6 +44,11 @@ module csr (
     `CSRGEN__FOREACH_MRO(CSRGEN__GENERATE_READ_ASSIGN_MRO)
     `CSRGEN__FOREACH_MRW(CSRGEN__GENERATE_READ_ASSIGN)
 
+    `CSRGEN__GENERATE_CONFLICT(MSTATUS)
+    `CSRGEN__GENERATE_CONFLICT(MCAUSE)
+    `CSRGEN__GENERATE_CONFLICT(MTVAL)
+    `CSRGEN__GENERATE_CONFLICT(MEPC)
+
     always @(posedge clk) begin
         if (!rst_n) begin
             `CSRGEN__FOREACH_MCOUNTER(CSRGEN__GENERATE_INITIAL_VALUE)
@@ -51,5 +58,21 @@ module csr (
             `CSRGEN__FOREACH_MRW(CSRGEN__GENERATE_WRITE)
         end
     end
+
+    wire [(2*`ISA__XLEN)-1:0] mcycle      = {csr_interface.MCYCLEH_reg,csr_interface.MCYCLE_reg};
+    wire [(2*`ISA__XLEN)-1:0] mcycle_next = mcycle + 1'b1;
+
+    assign csr_interface.MCYCLE_in  = mcycle_next[(2*`ISA__XLEN)-1:`ISA__XLEN];
+    assign csr_interface.MCYCLEH_in = mcycle_next[`ISA__XLEN-1:0];
+    assign csr_interface.MCYCLE_write  = !`CSR__MCOUNTINHIBIT_CY(csr_interface.MCOUNTINHIBIT_reg);
+    assign csr_interface.MCYCLEH_write = !`CSR__MCOUNTINHIBIT_CY(csr_interface.MCOUNTINHIBIT_reg);
+
+    wire [(2*`ISA__XLEN)-1:0] minstret      = {csr_interface.MINSTRETH_reg,csr_interface.MINSTRET_reg};
+    wire [(2*`ISA__XLEN)-1:0] minstret_next = minstret + 1'b1;
+
+    assign csr_interface.MINSTRET_in  = minstret_next[(2*`ISA__XLEN)-1:`ISA__XLEN];
+    assign csr_interface.MINSTRETH_in = minstret_next[`ISA__XLEN-1:0];
+    assign csr_interface.MINSTRET_write  = retire && !`CSR__MCOUNTINHIBIT_IR(csr_interface.MCOUNTINHIBIT_reg);
+    assign csr_interface.MINSTRETH_write = retire && !`CSR__MCOUNTINHIBIT_IR(csr_interface.MCOUNTINHIBIT_reg);
 
 endmodule
