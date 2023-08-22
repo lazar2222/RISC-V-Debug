@@ -1,21 +1,21 @@
 `include "control_signals_if.svh"
 `include "isa.svh"
 
-`define CONTROL__READ_INST   control_signals.addr_sel = `CONTROL_SIGNALS__ADDR_PC; \
-                             control_signals.mem_read = 1'b1;
+`define CONTROL__READ_INST   control_signals.addr_sel    = `CONTROL_SIGNALS__ADDR_PC; \
+                             control_signals.mem_read    = 1'b1;
 
-`define CONTROL__NEXT_INST   control_signals.write_pc = 1'b1; \
+`define CONTROL__NEXT_INST   control_signals.write_pc_ne = 1'b1; \
                              `CONTROL__READ_INST
 
-`define CONTROL__ALU_ADDRESS control_signals.alu_insel1 = `CONTROL_SIGNALS__ALU1_RS; \
-                             control_signals.alu_insel2 = `CONTROL_SIGNALS__ALU2_IM; \
-                             control_signals.addr_sel   = `CONTROL_SIGNALS__ADDR_ALU;
+`define CONTROL__ALU_ADDRESS control_signals.alu_insel1  = `CONTROL_SIGNALS__ALU1_RS; \
+                             control_signals.alu_insel2  = `CONTROL_SIGNALS__ALU2_IM; \
+                             control_signals.addr_sel    = `CONTROL_SIGNALS__ADDR_ALU;
 
-`define CONTROL__WRITE_ALU   control_signals.rd_sel     = `CONTROL_SIGNALS__RD_ALU; \
-                             control_signals.write_rd   = 1'b1;
+`define CONTROL__WRITE_ALU   control_signals.rd_sel      = `CONTROL_SIGNALS__RD_ALU; \
+                             control_signals.write_rd    = 1'b1;
 
-`define CONTROL__WRITE_MEM   control_signals.rd_sel     = `CONTROL_SIGNALS__RD_MEM; \
-                             control_signals.write_rd   = 1'b1;
+`define CONTROL__WRITE_MEM   control_signals.rd_sel      = `CONTROL_SIGNALS__RD_MEM; \
+                             control_signals.write_rd    = 1'b1;
 
 module control (
     input clk,
@@ -68,18 +68,20 @@ module control (
         || mcp_reg == STORE_1
         );
 
-    assign control_signals.load_op = mcp_reg == LOAD_1;
+    assign control_signals.load_op  = mcp_reg == LOAD_1;
+    assign control_signals.write_pc = control_signals.write_pc_ne || control_signals.write_pc_ex;
 
     always_comb begin
-        control_signals.write_pc   = 1'b0;
-        control_signals.write_rd   = 1'b0;
-        control_signals.write_csr  = 1'b0;
-        control_signals.mem_read   = 1'b0;
-        control_signals.mem_write  = 1'b0;
-        control_signals.addr_sel   = `CONTROL_SIGNALS__ADDR_PC;
-        control_signals.rd_sel     = `CONTROL_SIGNALS__RD_ALU;
-        control_signals.alu_insel1 = `CONTROL_SIGNALS__ALU1_RS;
-        control_signals.alu_insel2 = `CONTROL_SIGNALS__ALU2_RS;
+        control_signals.write_pc_ne = 1'b0;
+        control_signals.write_pc_ex = 1'b0;
+        control_signals.write_rd    = 1'b0;
+        control_signals.write_csr   = 1'b0;
+        control_signals.mem_read    = 1'b0;
+        control_signals.mem_write   = 1'b0;
+        control_signals.addr_sel    = `CONTROL_SIGNALS__ADDR_PC;
+        control_signals.rd_sel      = `CONTROL_SIGNALS__RD_ALU;
+        control_signals.alu_insel1  = `CONTROL_SIGNALS__ALU1_RS;
+        control_signals.alu_insel2  = `CONTROL_SIGNALS__ALU2_RS;
         case (mcp_addr)
             PROLOGUE: begin
                 `CONTROL__READ_INST
@@ -147,10 +149,11 @@ module control (
             end
         endcase
         if (exception) begin
-            control_signals.write_rd  = 1'b0;
-            control_signals.write_csr = 1'b0;
-            control_signals.mem_write = 1'b0;
-            `CONTROL__NEXT_INST
+            control_signals.write_rd    = 1'b0;
+            control_signals.write_csr   = 1'b0;
+            control_signals.mem_write   = 1'b0;
+            control_signals.write_pc_ex = 1'b1;
+            `CONTROL__READ_INST
         end
     end
 

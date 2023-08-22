@@ -30,7 +30,8 @@ module rv_core (
     wire [`ISA__FUNCT3_WIDTH-1:0] mem_size;
     wire [`ISA__FUNCT3_WIDTH-1:0] op;
 
-    wire exception, interrupt, mret;
+    wire exception, interrupt;
+    wire mret = 1'b0;
     wire trap;
     wire ialign;
     wire malign, fault;
@@ -39,6 +40,7 @@ module rv_core (
     wire ecall, ebreak;
     wire retire;
     wire conflict;
+    wire timer;
 
     assign retire = control_signals.write_pc  && !exception;
     assign trap   = exception || interrupt || mret;
@@ -173,10 +175,13 @@ module rv_core (
     control control (
         .clk            (clk),
         .rst_n          (rst_n),
+        .exception      (exception),
         .control_signals(control_signals)
     );
 
-    csr csr (
+    csr #(
+        .BaseAddress(`ISA__TIME_BASE)
+    ) csr (
         .clk          (clk),
         .rst_n        (rst_n),
         .csr_interface(csr_interface),
@@ -191,7 +196,8 @@ module rv_core (
         .retire       (retire),
         .csr_out      (csr_out),
         .invalid      (invalid_csr),
-        .conflict     (conflict)
+        .conflict     (conflict),
+        .timeint      (timer)
     );
 
     int_ctl int_ctl (
@@ -199,7 +205,7 @@ module rv_core (
         .csrs        (csr_interface),
         .nmi         (nmi),
         .exti        (exti),
-        .timer       (1'b0),
+        .timer       (timer),
         .breakpoint  (1'b0),
         .fault       (fault),
         .invalid_inst(invalid_inst),

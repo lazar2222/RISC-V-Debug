@@ -10,6 +10,8 @@
 `define ISA__TVEC `SYSTEM__TVEC
 `define ISA__VECT `SYSTEM__VECT
 
+`define ISA__TIME_BASE `SYSTEM__TIME_BASE
+
 `define ISA__RFLEN $clog2(`ISA__RNUM)
 `define ISA__INST_SIZE 32'd4
 `define ISA__INST_LOAD_SIZE $clog2(`ISA__INST_SIZE)

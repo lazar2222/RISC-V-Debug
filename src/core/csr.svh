@@ -83,13 +83,14 @@
 `define CSR__MSCRATCH_VALUE      32'h00000000
 `define CSR__MCOUNTINHIBIT_VALUE 32'h00000000
 
+`define CSR__MSTATUS_MPP(csr)      csr[12:11]
 `define CSR__MSTATUS_MPIE(csr)     csr[7]
 `define CSR__MSTATUS_MIE(csr)      csr[3]
 `define CSR__MSTATUS_MPIE_MASK     32'h00000080
 `define CSR__MSTATUS_MIE_MASK      32'h00000008
 
-`define CSR__TVEC_TVEC(csr)        (csr & 32'hFFFFFFFC)
-`define CSR__TVEC_VECT(csr)        csr[0]
+`define CSR__MTVEC_TVEC(csr)        (csr & 32'hFFFFFFFC)
+`define CSR__MTVEC_VECT(csr)        csr[0]
 
 `define CSR__MI_MEI(csr)           csr[11]
 `define CSR__MI_MTI(csr)           csr[7]
@@ -111,6 +112,13 @@
 `define CSR__MCAUSE_STORE_MALIGN 32'd6
 `define CSR__MCAUSE_STORE_FAULT  32'd7
 `define CSR__MCAUSE_ENV_CALL     32'd11
+
+`define CSR__MTIME_OFFSET     32'd0
+`define CSR__MTIMEH_OFFSET    32'd1
+`define CSR__MTIMECMP_OFFSET  32'd2
+`define CSR__MTIMECMPH_OFFSET 32'd3
+
+`define CSR__MACHINE_MODE      2'b11
 
 
 

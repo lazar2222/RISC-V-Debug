@@ -34,9 +34,9 @@ module int_ctl (
     output                  interrupt
 );
     wire instruction_start = ctrl.write_ir;
-    wire instruction_end   = ctrl.write_pc;
+    wire instruction_end   = ctrl.write_pc_ne;
     wire load              = ctrl.load_op;
-    wire csr               = ctrl.write_csr;
+    wire csr               = ctrl.opcode == `ISA__OPCODE_SYSTEM && ctrl.f3 != `ISA__FUNCT3_ECALL;
 
     wire inst_breakpoint = breakpoint   && instruction_start;
     wire inst_fault      = fault        && instruction_start;
@@ -86,6 +86,7 @@ module int_ctl (
     wire trap    = exception || interrupt || ret;
     wire trap_nm = exception || (interrupt && !ret);
 
+    assign `CSR__MSTATUS_MPP(csrs.MSTATUS_in)  = `CSR__MACHINE_MODE;
     assign `CSR__MSTATUS_MPIE(csrs.MSTATUS_in) = ret ? 1'b1 :`CSR__MSTATUS_MIE(csrs.MSTATUS_reg);
     assign `CSR__MSTATUS_MIE(csrs.MSTATUS_in)  = ret ? `CSR__MSTATUS_MPIE(csrs.MSTATUS_reg) : 1'b0;
     assign csrs.MSTATUS_write = trap;
@@ -153,8 +154,8 @@ module int_ctl (
     assign csrs.MEPC_in    = exception ? pc : next_pc;
     assign csrs.MEPC_write = trap_nm;
 
-    wire trap_vector = `CSR__TVEC_TVEC(csrs.TVEC_reg) + ((`CSR__TVEC_VECT(csrs.TVEC_reg) && interrupt) ? {mcause[29:0], 2'b0} : `ISA__ZERO);
-    wire mret_vector = csrs.MEPC_reg;
+    wire [`ISA__XLEN-1:0] trap_vector = `CSR__MTVEC_TVEC(csrs.MTVEC_reg) + ((`CSR__MTVEC_VECT(csrs.MTVEC_reg) && interrupt) ? {mcause[29:0], 2'b0} : `ISA__ZERO);
+    wire [`ISA__XLEN-1:0] mret_vector = csrs.MEPC_reg;
 
     assign tvec = ret ? mret_vector : trap_vector;
 

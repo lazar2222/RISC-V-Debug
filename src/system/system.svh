@@ -16,4 +16,6 @@
 `define SYSTEM__MEM_INIT "C:/Users/lazar/Desktop/RISC-V_Debug/src/memory/main.mif"
 `define SYSTEM__MEM_HINT "ENABLE_RUNTIME_MOD=YES,INSTANCE_NAME=MAIN"
 
+`define SYSTEM__TIME_BASE 32'hF000000
+
 `endif  //SYSTEM__SVH
