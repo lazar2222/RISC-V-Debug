@@ -31,12 +31,13 @@ module int_ctl (
 
     output [`ISA__XLEN-1:0] tvec,
     output                  exception,
-    output                  interrupt
+    output                  interrupt,
+    output                  interrupt_pending
 );
     wire instruction_start = ctrl.write_ir;
     wire instruction_end   = ctrl.write_pc_ne;
     wire load              = ctrl.load_op;
-    wire csr               = ctrl.opcode == `ISA__OPCODE_SYSTEM && ctrl.f3 != `ISA__FUNCT3_ECALL;
+    wire csr               = ctrl.opcode == `ISA__OPCODE_SYSTEM && ctrl.f3 != `ISA__FUNCT3_PRIV;
 
     wire inst_breakpoint = breakpoint   && instruction_start;
     wire inst_fault      = fault        && instruction_start;
@@ -73,14 +74,12 @@ module int_ctl (
     wire interrupt_enabled = `CSR__MSTATUS_MIE(csrs.MSTATUS_reg);
     wire exti_enabled      = `CSR__MI_MEI(csrs.MIE_reg);
     wire timer_enabled     = `CSR__MI_MTI(csrs.MIE_reg);
-    wire exti_interrupt    = exti  && exti_enabled  && interrupt_enabled;
-    wire timer_interrupt   = timer && timer_enabled && interrupt_enabled;
+    wire exti_interrupt    = exti  && exti_enabled;
+    wire timer_interrupt   = timer && timer_enabled;
 
-    assign interrupt = !conflict && (instruction_end || exception) &&
-    (  nmi
-    || exti_interrupt
-    || timer_interrupt
-    );
+    assign interrupt_pending = exti_interrupt || timer_interrupt;
+
+    assign interrupt = !conflict && (instruction_end || exception) && (nmi || (interrupt_pending && interrupt_enabled));
 
     wire ret     = mret && !exception;
     wire trap    = exception || interrupt || ret;
@@ -157,6 +156,6 @@ module int_ctl (
     wire [`ISA__XLEN-1:0] trap_vector = `CSR__MTVEC_TVEC(csrs.MTVEC_reg) + ((`CSR__MTVEC_VECT(csrs.MTVEC_reg) && interrupt) ? {mcause[29:0], 2'b0} : `ISA__ZERO);
     wire [`ISA__XLEN-1:0] mret_vector = csrs.MEPC_reg;
 
-    assign tvec = ret ? mret_vector : trap_vector;
+    assign tvec = ret ? mret_vector : (interrupt && nmi) ? `ISA__NMI : trap_vector;
 
 endmodule

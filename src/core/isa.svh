@@ -83,8 +83,7 @@
 `define ISA__FUNCT3_OR          3'b110
 `define ISA__FUNCT3_AND         3'b111
 `define ISA__FUNCT3_FENCE       3'b000
-`define ISA__FUNCT3_ECALL       3'b000
-`define ISA__FUNCT3_EBREAK      3'b000
+`define ISA__FUNCT3_PRIV        3'b000
 `define ISA__FUNCT3_CSRRW       3'b001
 `define ISA__FUNCT3_CSRRS       3'b010
 `define ISA__FUNCT3_CSRRC       3'b011
@@ -111,5 +110,7 @@
 `define ISA__RS1_ECALL          5'b00000
 `define ISA__IMM_ECALL          32'd0
 `define ISA__IMM_EBREAK         32'd1
+`define ISA__IMM_MRET           32'd770
+`define ISA__IMM_WFI            32'd261
 
 `endif  //ISA__SVH

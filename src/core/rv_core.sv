@@ -19,8 +19,7 @@ module rv_core (
     wire [`ISA__XLEN-1:0] ir, ir_in;
     wire [`ISA__XLEN-1:0] rs1, rs2;
     reg  [`ISA__XLEN-1:0] rd;
-    wire [`ISA__XLEN-1:0] mem_in, mem_out, mem_addr;
-    reg  [`ISA__XLEN-1:0] mem_addr_reg;
+    wire [`ISA__XLEN-1:0] mem_in, mem_out, mem_addr, mem_addr_reg;
     wire [`ISA__XLEN-1:0] csri, imm;
     reg  [`ISA__XLEN-1:0] alu_in1, alu_in2;
     wire [`ISA__XLEN-1:0] alu_out;
@@ -31,7 +30,7 @@ module rv_core (
     wire [`ISA__FUNCT3_WIDTH-1:0] op;
 
     wire exception, interrupt;
-    wire mret = 1'b0;
+    wire mret;
     wire trap;
     wire ialign;
     wire malign, fault;
@@ -41,6 +40,7 @@ module rv_core (
     wire retire;
     wire conflict;
     wire timer;
+    wire interrupt_pending;
 
     assign retire = control_signals.write_pc  && !exception;
     assign trap   = exception || interrupt || mret;
@@ -146,7 +146,8 @@ module rv_core (
         .op          (op),
         .mod         (mod),
         .ecall       (ecall),
-        .ebreak      (ebreak)
+        .ebreak      (ebreak),
+        .mret        (mret)
     );
 
     alu #(
@@ -173,10 +174,11 @@ module rv_core (
     );
 
     control control (
-        .clk            (clk),
-        .rst_n          (rst_n),
-        .exception      (exception),
-        .control_signals(control_signals)
+        .clk              (clk),
+        .rst_n            (rst_n),
+        .exception        (exception),
+        .interrupt_pending(interrupt_pending),
+        .control_signals  (control_signals)
     );
 
     csr #(
@@ -201,28 +203,29 @@ module rv_core (
     );
 
     int_ctl int_ctl (
-        .ctrl        (control_signals),
-        .csrs        (csr_interface),
-        .nmi         (nmi),
-        .exti        (exti),
-        .timer       (timer),
-        .breakpoint  (1'b0),
-        .fault       (fault),
-        .invalid_inst(invalid_inst),
-        .invalid_csr (invalid_csr),
-        .ialign      (ialign),
-        .ecall       (ecall),
-        .ebreak      (ebreak),
-        .malign      (malign),
-        .mret        (mret),
-        .conflict    (conflict),
-        .pc          (pc),
-        .next_pc     (next_pc),
-        .mem_addr    (mem_addr_reg),
-        .ir          (ir),
-        .tvec        (trap_pc),
-        .exception   (exception),
-        .interrupt   (interrupt)
+        .ctrl             (control_signals),
+        .csrs             (csr_interface),
+        .nmi              (nmi),
+        .exti             (exti),
+        .timer            (timer),
+        .breakpoint       (1'b0),
+        .fault            (fault),
+        .invalid_inst     (invalid_inst),
+        .invalid_csr      (invalid_csr),
+        .ialign           (ialign),
+        .ecall            (ecall),
+        .ebreak           (ebreak),
+        .malign           (malign),
+        .mret             (mret),
+        .conflict         (conflict),
+        .pc               (pc),
+        .next_pc          (next_pc),
+        .mem_addr         (mem_addr_reg),
+        .ir               (ir),
+        .tvec             (trap_pc),
+        .exception        (exception),
+        .interrupt        (interrupt),
+        .interrupt_pending(interrupt_pending)
     );
 
 endmodule

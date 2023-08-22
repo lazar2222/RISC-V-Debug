@@ -22,6 +22,7 @@ module control (
     input rst_n,
 
     input exception,
+    input interrupt_pending,
 
     control_signals_if control_signals
 );
@@ -138,12 +139,15 @@ module control (
                 `CONTROL__NEXT_INST
             end
             SYSTEM: begin
-                if (control_signals.f3 != `ISA__FUNCT3_ECALL) begin
+                if (control_signals.f3 != `ISA__FUNCT3_PRIV) begin
                     control_signals.rd_sel    = `CONTROL_SIGNALS__RD_CSR;
                     control_signals.write_rd  = 1'b1;
                     control_signals.write_csr = 1'b1;
+                    `CONTROL__NEXT_INST
                 end
-                `CONTROL__NEXT_INST
+                if (interrupt_pending) begin
+                    `CONTROL__NEXT_INST
+                end
             end
             default: begin
             end
@@ -168,13 +172,13 @@ module control (
             OPIMM,
             OP,
             MISCMEM,
-            SYSTEM,
             LOAD_1,
             STORE_1: mcp_next = control_signals.mem_complete ? DISPATCH : PROLOGUE;
             LOAD,
             LOAD_W:  mcp_next = control_signals.mem_complete ? LOAD_1   : LOAD_W;
             STORE,
             STORE_W: mcp_next = control_signals.mem_complete ? STORE_1  : STORE_W;
+            SYSTEM:  mcp_next = (control_signals.f3 != `ISA__FUNCT3_PRIV || interrupt_pending) ? (control_signals.mem_complete ? DISPATCH : PROLOGUE) : SYSTEM;
             default: mcp_next = mcp_addr + 5'd1;
         endcase
         if (exception) begin
