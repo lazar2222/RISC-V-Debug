@@ -23,6 +23,7 @@ module control (
 
     input exception,
     input interrupt_pending,
+    input debug,
 
     control_signals_if control_signals
 );
@@ -43,6 +44,7 @@ module control (
     localparam logic [`ISA__OPCODE_WIDTH-1:0] OP       = `ISA__OPCODE_OP;
     localparam logic [`ISA__OPCODE_WIDTH-1:0] MISCMEM  = `ISA__OPCODE_MISCMEM;
     localparam logic [`ISA__OPCODE_WIDTH-1:0] SYSTEM   = `ISA__OPCODE_SYSTEM;
+    localparam logic [`ISA__OPCODE_WIDTH-1:0] HALTED   = 5'b10_010;
 
     reg [`ISA__OPCODE_WIDTH-1:0] mcp_reg, mcp_next, mcp_addr;
 
@@ -67,8 +69,10 @@ module control (
         || mcp_reg == LOAD_1
         || mcp_reg == STORE_W
         || mcp_reg == STORE_1
+        || mcp_reg == HALTED
         );
 
+    assign control_signals.halted   = mcp_reg == HALTED;
     assign control_signals.write_pc = control_signals.write_pc_ne || control_signals.write_pc_ex;
 
     always_comb begin
@@ -178,10 +182,14 @@ module control (
             STORE,
             STORE_W: mcp_next = control_signals.mem_complete ? STORE_1  : STORE_W;
             SYSTEM:  mcp_next = (control_signals.f3 != `ISA__FUNCT3_PRIV || interrupt_pending) ? (control_signals.mem_complete ? DISPATCH : PROLOGUE) : SYSTEM;
+            HALTED:  mcp_next = debug ? HALTED : PROLOGUE;
             default: mcp_next = mcp_addr + 5'd1;
         endcase
         if (exception) begin
             mcp_next = control_signals.mem_complete ? DISPATCH : PROLOGUE;
+        end
+        if (debug && (mcp_next == DISPATCH || mcp_next == PROLOGUE)) begin
+            mcp_next = HALTED;
         end
     end
 endmodule

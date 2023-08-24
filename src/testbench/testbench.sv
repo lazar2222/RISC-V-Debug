@@ -1,14 +1,8 @@
-`include "../system/arilla_bus_if.svh"
-`include "../system/system.svh"
-
 module testbench ();
 
     reg clk;
     reg rst_n;
     reg inhibit;
-
-    wire nmi  = 1'b0;
-    wire exti = 1'b0;
 
     always #50 clk = !clk;
 
@@ -30,32 +24,33 @@ module testbench ();
         end
     end
 
-    arilla_bus_if #(
-        .DataWidth       (`SYSTEM__XLEN),
-        .ByteAddressWidth(`SYSTEM__ALEN),
-        .ByteSize        (`SYSTEM__BLEN)
-    ) bus_interface ();
+    wire [3:0] key = {3'b111,rst_n};
 
-    assign bus_interface.inhibit   = inhibit;
-    assign bus_interface.intercept = 1'b0;
+    wire [9:0] sw  = 10'd0;
 
-    rv_core rv_core (
-        .clk          (clk),
-        .rst_n        (rst_n),
-        .nmi          (nmi),
-        .exti         (exti),
-        .bus_interface(bus_interface)
-    );
+    wire [9:0] led;
 
-    memory #(
-        .BaseAddress(`SYSTEM__MEM_BASE),
-        .SizeBytes  (`SYSTEM__MEM_SIZE),
-        .InitFile   (`SYSTEM__MEM_INIT),
-        .Hint       (`SYSTEM__MEM_HINT)
-    ) memory (
-        .clk          (clk),
-        .rst_n        (rst_n),
-        .bus_interface(bus_interface)
+    wire [6:0] hex0;
+    wire [6:0] hex1;
+    wire [6:0] hex2;
+    wire [6:0] hex3;
+    wire [6:0] hex4;
+    wire [6:0] hex5;
+
+    wire [35:0] gpio = 36'd0;
+
+    top top (
+        .clock_50(clk),
+        .key     (key),
+        .sw      (sw),
+        .led     (led),
+        .hex0    (hex0),
+        .hex1    (hex1),
+        .hex2    (hex2),
+        .hex3    (hex3),
+        .hex4    (hex4),
+        .hex5    (hex5),
+        .gpio    (gpio)
     );
 
 endmodule

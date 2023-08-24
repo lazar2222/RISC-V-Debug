@@ -1,4 +1,5 @@
 `include "arilla_bus_if.svh"
+`include "../debug/debug_if.svh"
 `include "system.svh"
 
 module top (
@@ -45,12 +46,15 @@ module top (
     assign bus_interface.inhibit   = sw[9];
     assign bus_interface.intercept = sw[8];
 
+    debug_if debug_interface ();
+
     rv_core rv_core (
-        .clk          (clk),
-        .rst_n        (rst_n),
-        .nmi          (nmi),
-        .exti         (exti),
-        .bus_interface(bus_interface)
+        .clk            (clk),
+        .rst_n          (rst_n),
+        .nmi            (nmi),
+        .exti           (exti),
+        .bus_interface  (bus_interface),
+        .debug_interface(debug_interface)
     );
 
     memory #(
