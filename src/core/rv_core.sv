@@ -43,17 +43,19 @@ module rv_core (
     wire conflict;
     wire timer;
     wire interrupt_pending;
-    wire debug;
+    wire debug, abstract;
 
     assign retire = control_signals.write_pc  && !exception;
     assign trap   = exception || interrupt || mret;
 
     assign ir_in  = mem_out;
-    assign mem_in = rs2;
 
-    assign next_pc  = trap                     ? trap_pc              : alu_pc;
-    assign mem_addr = control_signals.addr_sel ? shadow_pc            : alu_out;
-    assign mem_size = control_signals.addr_sel ? `ISA__INST_LOAD_SIZE : control_signals.f3;
+    assign next_pc  = trap     ? trap_pc                                                                    : alu_pc;
+    assign mem_addr = abstract ? debug_interface.data1_in : control_signals.addr_sel ? shadow_pc            : alu_out;
+    assign mem_size = abstract ? control_signals.f3       : control_signals.addr_sel ? `ISA__INST_LOAD_SIZE : control_signals.f3;
+    assign mem_in   = abstract ? debug_interface.data0_in                                                   : rs2;
+
+    assign debug_interface.data0_out = rd;
 
     always_comb begin
         case (control_signals.rd_sel)
@@ -138,6 +140,9 @@ module rv_core (
 
     inst_decode inst_decode (
         .inst        (ir),
+        .abstract    (abstract),
+        .cmd         (debug_interface.command),
+        .data0       (debug_interface.data0_in),
         .invalid_inst(invalid_inst),
         .opcode      (control_signals.opcode),
         .f3          (control_signals.f3),
@@ -182,6 +187,7 @@ module rv_core (
         .exception        (exception),
         .interrupt_pending(interrupt_pending),
         .debug            (debug),
+        .abstract         (abstract),
         .control_signals  (control_signals)
     );
 
@@ -196,7 +202,7 @@ module rv_core (
         .imm_in       (csri),
         .addr         (imm),
         .rs           (rs1_a),
-        .f3           (control_signals.f3),
+        .f3           (op),
         .write        (control_signals.write_csr),
         .debug        (debug),
         .retire       (retire),
@@ -233,11 +239,15 @@ module rv_core (
     );
 
     d_ctl d_ctl (
-        .clk     (clk),
-        .rst_n   (rst_n),
-        .debug   (debug),
-        .ctrl    (control_signals),
-        .debug_if(debug_interface)
+        .clk        (clk),
+        .rst_n      (rst_n),
+        .malign     (malign),
+        .fault      (fault),
+        .invalid_csr(invalid_csr),
+        .debug      (debug),
+        .abstract   (abstract),
+        .ctrl       (control_signals),
+        .debug_if   (debug_interface)
     );
 
 endmodule

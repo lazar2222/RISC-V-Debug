@@ -1,7 +1,12 @@
 `include "isa.svh"
+`include "../debug/debug.svh"
 
 module inst_decode (
     input [`ISA__XLEN-1:0] inst,
+
+    input                  abstract,
+    input [`ISA__XLEN-1:0] cmd,
+    input [`ISA__XLEN-1:0] data0,
 
     output invalid_inst,
 
@@ -28,12 +33,29 @@ module inst_decode (
     wire [        `ISA__XLEN-1:0] ji = `ISA__J_IMMEDIATE(inst);
     wire [        `ISA__XLEN-1:0] si = `ISA__S_IMMEDIATE(inst);
 
-    assign opcode = `ISA__OPCODE(inst);
-    assign f3     = `ISA__FUNCT3(inst);
-    assign rd     = `ISA__RD(inst);
-    assign rs1    = `ISA__RS1(inst);
-    assign rs2    = `ISA__RS2(inst);
-    assign csri   = {{`ISA__XLEN - `ISA__RFLEN{1'b0}},rs1};
+    reg  [`ISA__OPCODE_WIDTH-1:0] abstract_opcode;
+    wire [        `ISA__XLEN-1:0] abstract_address = {`DEBUG__AC_REG(cmd),`DEBUG__AC_REG(cmd)};
+    wire [`ISA__FUNCT3_WIDTH-1:0] abstract_f3 = (`DEBUG__AC_COMMAND(cmd) == `DEBUG__AC_COMMAND_ACCESS_MEMORY) ? `DEBUG__AC_AARSIZE(cmd) : {`DEBUG__AC_WRITE(cmd),`DEBUG__AC_REG_CSR(cmd),`DEBUG__AC_POSTEXEC(cmd)};
+
+    always_comb begin
+        abstract_opcode = {`ISA__OPCODE_WIDTH{1'b0}};
+        if (`DEBUG__AC_COMMAND(cmd) == `DEBUG__AC_COMMAND_ACCESS_REGISTER) begin
+           abstract_opcode = `DEBUG__AC_TRANSFER(cmd) ? `DEBUG__OPCODE_ACCESS_REG : `DEBUG__OPCODE_EXEC;
+        end
+        if (`DEBUG__AC_COMMAND(cmd) == `DEBUG__AC_COMMAND_QUICK_ACCESS) begin
+            abstract_opcode = `DEBUG__OPCODE_EXEC;
+        end
+        if (`DEBUG__AC_COMMAND(cmd) == `DEBUG__AC_COMMAND_ACCESS_MEMORY) begin
+            abstract_opcode = `DEBUG__AC_WRITE(cmd) ? `DEBUG__OPCODE_WRITE_MEM : `DEBUG__OPCODE_READ_MEM;
+        end
+    end
+
+    assign opcode = abstract ? abstract_opcode                   : `ISA__OPCODE(inst);
+    assign f3     = abstract ? abstract_f3                       : `ISA__FUNCT3(inst);
+    assign rd     = abstract ? abstract_address[`ISA__RFLEN-1:0] : `ISA__RD(inst);
+    assign rs1    = abstract ? abstract_address[`ISA__RFLEN-1:0] : `ISA__RS1(inst);
+    assign rs2    = abstract ? abstract_address[`ISA__RFLEN-1:0] : `ISA__RS2(inst);
+    assign csri   = abstract ? data0                             : {{`ISA__XLEN - `ISA__RFLEN{1'b0}},rs1};
 
     wire invalid_opcode_pfx = `ISA__OPCODE_PFX(inst) != `ISA__OPCODE_PFX_32BIT;
 
@@ -186,6 +208,11 @@ module inst_decode (
             `ISA__OPCODE_OPIMM: begin op = f3;               mod =  1'b0; end
             default:            begin op = f3;               mod = f7[5]; end
         endcase
+        if (abstract) begin
+            imm = `DEBUG__AC_REG_CSR(cmd) ? abstract_address    : data0;
+            op  = `DEBUG__AC_REG_CSR(cmd) ? `ISA__FUNCT3_CSRRWI : `ISA__FUNCT3_ADD;
+            mod =  1'b0;
+        end
     end
 
 endmodule

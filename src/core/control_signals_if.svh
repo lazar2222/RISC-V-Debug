@@ -26,6 +26,7 @@ interface control_signals_if;
     reg                           addr_sel;
     reg  [                   1:0] rd_sel;
     reg  [                   1:0] alu_insel1, alu_insel2;
+    reg                           abstract_write, abstract_done;
 endinterface
 
 `endif  //CONTROL_SIGNALS_IF__SVH

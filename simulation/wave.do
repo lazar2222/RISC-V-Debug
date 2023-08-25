@@ -17,7 +17,13 @@ radix define MCP {
 	"5'b01100" "OP"
 	"5'b00011" "MISCMEM"
 	"5'b11100" "SYSTEM"
-    "5'b10010" "HALTED"
+    "5'b01111" "HALTED"
+    "5'b10010" "ABS_REG"
+    "5'b10011" "ABS_EXEC"
+    "5'b10100" "ABS_RMEM"
+    "5'b10101" "ABS_RMEM_1"
+    "5'b10110" "ABS_WMEM"
+    "5'b10111" "ABS_WMEM_1"
     -default hex
 }
 quietly WaveActivateNextPane {} 0
