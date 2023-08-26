@@ -1,6 +1,7 @@
 `include "debug.svh"
 `include "debug_if.svh"
 `include "dmi_if.svh"
+`include "../system/arilla_bus_if.svh"
 
 module dm (
     input clk,
@@ -9,8 +10,9 @@ module dm (
     output reset_n,
     output hart_reset_n,
 
-    dmi_if   dmi,
-    debug_if debug
+    dmi_if        dmi,
+    debug_if      debug,
+    arilla_bus_if bus_interface
 );
     reg dmactive;
 
@@ -38,44 +40,6 @@ module dm (
 
     wire resumereq    = dmi.address == `DEBUG__DMCONTROL && dmi.write && dmi.data[30];
     wire ackhavereset = dmi.address == `DEBUG__DMCONTROL && dmi.write && dmi.data[28];
-
-    always @(posedge clk) begin
-        if(dm_reset) begin
-            ndmreset     <= 1'b0;
-            hartreset    <= 1'b0;
-            haltonreset  <= 1'b0;
-            haltreq      <= 1'b0;
-            busy         <= 1'b0;
-            cmderr       <= 3'd0;
-            command      <= 32'd0;
-            abstractauto <= 32'd0;
-
-            `DEBUGGEN__FOREACH_SIMPLE(DEBUGGEN__GENERATE_INITIAL_VALUE_SIMPLE)
-        end else begin
-            if(dmi.address == `DEBUG__DMCONTROL && dmi.write) begin
-                haltreq     <= dmi.data[31];
-                hartreset   <= dmi.data[29];
-                haltonreset <= dmi.data[2] ? 1'b0 : dmi.data[3] ? 1'b1 : haltonreset;
-                ndmreset    <= dmi.data[1];
-            end
-            if(dmi.address == `DEBUG__COMMAND && dmi.write && cmderr == 3'd0) begin
-                command <= dmi.data;
-                busy    <= 1'b1;
-            end
-            if(dmi.address == `DEBUG__ABSTRACTAUTO && dmi.write) begin
-                abstractauto <= dmi.data && 32'hFFFF0FFF;
-            end
-
-            `DEBUGGEN__FOREACH_SIMPLE(DEBUGGEN__GENERATE_WRITE_SIMPLE)
-            `DEBUGGEN__FOREACH_SIMPLE(DEBUGGEN__GENERATE_AUTOEXEC)
-
-            if (debug.done) begin
-                busy <= 1'b0;
-            end
-
-            cmderr <= cmderr_next;
-        end
-    end
 
     wire system_reset = !rst_n || ndmreset;
     wire hart_reset   = system_reset || hartreset;
@@ -146,6 +110,104 @@ module dm (
             cmderr_next = 3'd5;
         end else begin
             cmderr_next = cmderr;
+        end
+    end
+
+    localparam int BaseAddress           = 32'hFFFFFF80;
+    localparam int DataWidth             = $bits(bus_interface.data_ctp);
+    localparam int AddressWidth          = $bits(bus_interface.address);
+    localparam int BytesPerWord          = $bits(bus_interface.byte_enable);
+    localparam int ByteSize              = DataWidth / BytesPerWord;
+    localparam int SizeWords             = 32;
+    localparam int ByteAddressWidth      = AddressWidth + $clog2(BytesPerWord);
+    localparam int LocalAddressWidth     = $clog2(SizeWords);
+    localparam int LocalByteAddressWidth = LocalAddressWidth + $clog2(BytesPerWord);
+    localparam int DeviceAddressWidth    = AddressWidth - LocalAddressWidth;
+    localparam int DeviceAddress         = BaseAddress[ByteAddressWidth-1:LocalByteAddressWidth];
+
+    wire [DeviceAddressWidth-1:0] device_address = bus_interface.address[AddressWidth-1:LocalAddressWidth];
+    reg  [ LocalAddressWidth-1:0] local_address;
+    wire [      BytesPerWord-1:0] byte_enable    = bus_interface.byte_enable;
+    wire [         DataWidth-1:0] data_in        = bus_interface.data_ctp;
+    wire [         DataWidth-1:0] data_mask;
+    reg  [         DataWidth-1:0] data_out;
+    reg  [         DataWidth-1:0] tmp;
+
+    genvar i;
+    generate
+        for(i = 0; i < BytesPerWord; i++) begin : g_mask
+            assign data_mask[ByteSize*i+:ByteSize] = {ByteSize{byte_enable[i]}};
+        end
+    endgenerate
+
+    reg  read_hit;
+    wire mem_hit     = device_address == DeviceAddress;
+    wire write_hit   = mem_hit && bus_interface.write;
+    wire data_enable = read_hit && !bus_interface.intercept;
+
+    assign bus_interface.hit      = mem_hit     ? 1'b1     : 1'bz;
+    assign bus_interface.data_ptc = data_enable ? data_out : {DataWidth{1'bz}};
+
+    always @(posedge clk) begin
+        if (dm_reset) begin
+            read_hit <= 1'b0;
+        end else begin
+            read_hit <= mem_hit && bus_interface.read;
+        end
+    end
+
+    always @(posedge clk) begin
+        if (dm_reset) begin
+            local_address <= {LocalAddressWidth{1'b0}};
+        end else begin
+            local_address <= bus_interface.address[LocalAddressWidth-1:0];
+        end
+    end
+
+    always_comb begin
+        case (local_address)
+            `DEBUGGEN__FOREACH_SIMPLE(DEBUGGEN__GENERATE_DATA_OUT)
+            default: data_out = 32'h00100073;
+        endcase
+        tmp = (data_in & data_mask) | (data_out & ~data_mask);
+    end
+
+    always @(posedge clk) begin
+        if(dm_reset) begin
+            ndmreset     <= 1'b0;
+            hartreset    <= 1'b0;
+            haltonreset  <= 1'b0;
+            haltreq      <= 1'b0;
+            busy         <= 1'b0;
+            cmderr       <= 3'd0;
+            command      <= 32'd0;
+            abstractauto <= 32'd0;
+
+            `DEBUGGEN__FOREACH_SIMPLE(DEBUGGEN__GENERATE_INITIAL_VALUE_SIMPLE)
+        end else begin
+            haltreq         <= haltonreset && hart_reset;
+            if(dmi.address == `DEBUG__DMCONTROL && dmi.write) begin
+                haltreq     <= dmi.data[31];
+                hartreset   <= dmi.data[29];
+                haltonreset <= dmi.data[2] ? 1'b0 : dmi.data[3] ? 1'b1 : haltonreset;
+                ndmreset    <= dmi.data[1];
+            end
+            if(dmi.address == `DEBUG__COMMAND && dmi.write && cmderr == 3'd0) begin
+                command <= dmi.data;
+                busy    <= 1'b1;
+            end
+            if(dmi.address == `DEBUG__ABSTRACTAUTO && dmi.write) begin
+                abstractauto <= dmi.data && 32'hFFFF0FFF;
+            end
+
+            `DEBUGGEN__FOREACH_SIMPLE(DEBUGGEN__GENERATE_WRITE_SIMPLE)
+            `DEBUGGEN__FOREACH_SIMPLE(DEBUGGEN__GENERATE_AUTOEXEC)
+
+            if (debug.done) begin
+                busy <= 1'b0;
+            end
+
+            cmderr <= cmderr_next;
         end
     end
 

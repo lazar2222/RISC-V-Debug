@@ -59,7 +59,7 @@
 `define DEBUG__SBDATA0      7'h3c
 `define DEBUG__HALTSUM0     7'h40
 
-`define DEBUG__HARTINFO_VALUE     32'h0021CFF1
+`define DEBUG__HARTINFO_VALUE     32'h0021CFE8
 
 `define DEBUG__DATA0_AUTOEXEC     0
 `define DEBUG__DATA1_AUTOEXEC     1
@@ -89,6 +89,35 @@
 `define DEBUG__PROGBUF13_AUTOEXEC 29
 `define DEBUG__PROGBUF14_AUTOEXEC 30
 `define DEBUG__PROGBUF15_AUTOEXEC 31
+
+`define DEBUG__PROGBUF0_OFFSET  32'd0
+`define DEBUG__PROGBUF1_OFFSET  32'd1
+`define DEBUG__PROGBUF2_OFFSET  32'd2
+`define DEBUG__PROGBUF3_OFFSET  32'd3
+`define DEBUG__PROGBUF4_OFFSET  32'd4
+`define DEBUG__PROGBUF5_OFFSET  32'd5
+`define DEBUG__PROGBUF6_OFFSET  32'd6
+`define DEBUG__PROGBUF7_OFFSET  32'd7
+`define DEBUG__PROGBUF8_OFFSET  32'd8
+`define DEBUG__PROGBUF9_OFFSET  32'd9
+`define DEBUG__PROGBUF10_OFFSET 32'd10
+`define DEBUG__PROGBUF11_OFFSET 32'd11
+`define DEBUG__PROGBUF12_OFFSET 32'd12
+`define DEBUG__PROGBUF13_OFFSET 32'd13
+`define DEBUG__PROGBUF14_OFFSET 32'd14
+`define DEBUG__PROGBUF15_OFFSET 32'd15
+`define DEBUG__DATA0_OFFSET     32'd20
+`define DEBUG__DATA1_OFFSET     32'd21
+`define DEBUG__DATA2_OFFSET     32'd22
+`define DEBUG__DATA3_OFFSET     32'd23
+`define DEBUG__DATA4_OFFSET     32'd24
+`define DEBUG__DATA5_OFFSET     32'd25
+`define DEBUG__DATA6_OFFSET     32'd26
+`define DEBUG__DATA7_OFFSET     32'd27
+`define DEBUG__DATA8_OFFSET     32'd28
+`define DEBUG__DATA9_OFFSET     32'd29
+`define DEBUG__DATA10_OFFSET    32'd30
+`define DEBUG__DATA11_OFFSET    32'd31
 
 `define DEBUG__SBCS_MASK  32'h001F8000
 `define DEBUG__SBCS_VALUE 32'h20040407
@@ -134,14 +163,16 @@ tri0        ``register``_write; \
 assign dmi.data = (dmi.address == `DEBUG__``register`` && dmi.read) ? ``register``_reg : {32{1'bz}}; \
 
 `define DEBUGGEN__GENERATE_INITIAL_VALUE_SIMPLE(register) \
-``register``_reg <= 32'd0; \
+``register``_reg <= 32'h00100073; \
 
 `define DEBUGGEN__GENERATE_WRITE_SIMPLE(register) \
-if (dmi.address == `DEBUG__``register`` && dmi.write && busy == 1'b0) begin \
-    ``register``_reg <= dmi.data;                                           \
-end else if (``register``_write) begin                                      \
-    ``register``_reg <= ``register``_in;                                    \
-end                                                                         \
+if (dmi.address == `DEBUG__``register`` && dmi.write && busy == 1'b0) begin   \
+    ``register``_reg <= dmi.data;                                             \
+end else if (local_address == `DEBUG__``register``_OFFSET && write_hit) begin \
+    ``register``_reg <= tmp;                                                  \
+end else if (``register``_write) begin                                        \
+    ``register``_reg <= ``register``_in;                                      \
+end                                                                           \
 
 `define DEBUGGEN__GENERATE_AUTOEXEC(register) \
 if (dmi.address == `DEBUG__``register`` && (dmi.write || dmi.read) && cmderr == 3'd0 && abstractauto[`DEBUG__``register``_AUTOEXEC]) begin \
@@ -150,5 +181,8 @@ end                                                                             
 
 `define DEBUGGEN__GENERATE_BUSY_ERROR(register) \
 || dmi.address == `DEBUG__``register`` && (dmi.write || dmi.read) \
+
+`define DEBUGGEN__GENERATE_DATA_OUT(register) \
+`DEBUG__``register``_OFFSET: data_out = ``register``_reg; \
 
 `endif  //DEBUG__SVH

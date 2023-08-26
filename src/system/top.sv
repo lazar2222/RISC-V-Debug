@@ -53,12 +53,13 @@ module top (
     );
 
     dm dm (
-        .clk         (clk),
-        .rst_n       (reset_n),
-        .reset_n     (rst_n),
-        .hart_reset_n(hart_reset_n),
-        .dmi         (dmi_interface),
-        .debug       (debug_interface)
+        .clk          (clk),
+        .rst_n        (reset_n),
+        .reset_n      (rst_n),
+        .hart_reset_n (hart_reset_n),
+        .dmi          (dmi_interface),
+        .debug        (debug_interface),
+        .bus_interface(bus_interface)
     );
 
     assign led[0] = rst_n;
