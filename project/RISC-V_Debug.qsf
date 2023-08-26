@@ -241,6 +241,7 @@ set_global_assignment -name SEARCH_PATH ../src/components
 set_global_assignment -name SDC_FILE "RISC-V_Debug.SDC"
 set_global_assignment -name SYSTEMVERILOG_FILE ../src/system/top.sv
 set_global_assignment -name SYSTEMVERILOG_FILE ../src/memory/memory.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../src/debug/dm.sv
 set_global_assignment -name SYSTEMVERILOG_FILE ../src/core/rv_core.sv
 set_global_assignment -name SYSTEMVERILOG_FILE ../src/core/mem_interface.sv
 set_global_assignment -name SYSTEMVERILOG_FILE ../src/core/alu.sv

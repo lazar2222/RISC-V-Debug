@@ -13,6 +13,7 @@ interface debug_if;
     wire        done;
     wire        write;
     wire        error;
+    wire        exception;
     wire [31:0] data0_out;
 endinterface
 

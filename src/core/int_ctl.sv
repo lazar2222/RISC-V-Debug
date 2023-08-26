@@ -11,7 +11,10 @@ module int_ctl (
     input exti,
     input timer,
 
-    input breakpoint,
+    input debug,
+    input step,
+
+    input breakp,
     input fault,
     input invalid_inst,
     input invalid_csr,
@@ -34,6 +37,8 @@ module int_ctl (
     output                  interrupt,
     output                  interrupt_pending
 );
+    wire breakpoint = breakp && !debug;
+
     wire instruction_start = ctrl.write_ir;
     wire instruction_end   = ctrl.write_pc_ne;
     wire load              = ctrl.opcode == `ISA__OPCODE_LOAD;
@@ -46,7 +51,7 @@ module int_ctl (
     wire csr_invalid     = invalid_csr  && instruction_start && csr;
     wire inst_align      = ialign       && instruction_end;
     wire env_call        = ecall        && instruction_end;
-    wire env_break       = ebreak       && instruction_end;
+    wire env_break       = ebreak       && instruction_end && !`CSR__DCSR_EBREAKM(csrs.DCSR_reg);
     wire ls_breakpoint   = breakpoint   && instruction_end;
     wire l_align         = malign       && instruction_end && load;
     wire l_fault         = fault        && instruction_end && load;
@@ -70,7 +75,7 @@ module int_ctl (
 
     assign `CSR__MI_MEI(csrs.MIP_in) = exti;
     assign `CSR__MI_MTI(csrs.MIP_in) = timer;
-    assign csrs.MIP_write = 1'b1;
+    assign csrs.MIP_write            = 1'b1;
 
     wire interrupt_enabled = `CSR__MSTATUS_MIE(csrs.MSTATUS_reg);
     wire exti_enabled      = `CSR__MI_MEI(csrs.MIE_reg);
@@ -80,7 +85,10 @@ module int_ctl (
 
     assign interrupt_pending = exti_interrupt || timer_interrupt;
 
-    assign interrupt = !conflict && (instruction_end || exception) && (nmi || (interrupt_pending && interrupt_enabled));
+    assign interrupt = !conflict && !debug
+        && !(step && !`CSR__DCSR_STEPIE(csrs.DCSR_reg))
+        && (instruction_end || exception)
+        && (nmi || (interrupt_pending && interrupt_enabled));
 
     wire ret     = mret && !exception;
     wire trap    = exception || interrupt || ret;
@@ -89,7 +97,7 @@ module int_ctl (
     assign `CSR__MSTATUS_MPP(csrs.MSTATUS_in)  = `CSR__MACHINE_MODE;
     assign `CSR__MSTATUS_MPIE(csrs.MSTATUS_in) = ret ? 1'b1 :`CSR__MSTATUS_MIE(csrs.MSTATUS_reg);
     assign `CSR__MSTATUS_MIE(csrs.MSTATUS_in)  = ret ? `CSR__MSTATUS_MPIE(csrs.MSTATUS_reg) : 1'b0;
-    assign csrs.MSTATUS_write = trap;
+    assign csrs.MSTATUS_write = trap && !debug;
 
     reg [`ISA__XLEN-1:0] mcause;
     reg [`ISA__XLEN-1:0] mtval;
@@ -148,11 +156,11 @@ module int_ctl (
 
     assign csrs.MTVAL_in     = mtval;
     assign csrs.MCAUSE_in    = mcause;
-    assign csrs.MCAUSE_write = trap_nm;
-    assign csrs.MTVAL_write  = trap_nm;
+    assign csrs.MCAUSE_write = trap_nm && !debug;
+    assign csrs.MTVAL_write  = trap_nm && !debug;
 
     assign csrs.MEPC_in    = exception ? pc : next_pc;
-    assign csrs.MEPC_write = trap_nm;
+    assign csrs.MEPC_write = trap_nm && !debug;
 
     wire [`ISA__XLEN-1:0] trap_vector = `CSR__MTVEC_TVEC(csrs.MTVEC_reg) + ((`CSR__MTVEC_VECT(csrs.MTVEC_reg) && interrupt) ? {mcause[29:0], 2'b0} : `ISA__ZERO);
     wire [`ISA__XLEN-1:0] mret_vector = csrs.MEPC_reg;

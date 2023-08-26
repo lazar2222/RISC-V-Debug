@@ -1,1 +1,48 @@
 early breakpoint
+
+Debug Transport Module
+
+Debug Module Interface
+
+Debug Module
+	info
+	halt/resume
+	halt status
+	abstract commands GPR + CSR
+	reset
+	debug out of reset
+	Program Buffer
+	bus access
+	mem from hart
+	
+	regs:
+			nextdm
+			ndmreset
+		dmcontrol
+			dmactive
+		allunavail
+		anyunavail
+		hartreset
+		anyhaverest
+		allhaverest
+		ackhavereset
+		hartsel
+		anynonexistent
+		heart states
+			nonexistent
+			unavail
+			running
+			halted
+			
+
+Debug mode
+
+Hardware Trigger Module
+
+
+Debug mode cause
+	2 Trigger		4
+	1 ebreak		3
+	5 ResetHalt		2
+	3 HaltReq		1
+	4 SingleStep	0

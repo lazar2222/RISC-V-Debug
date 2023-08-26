@@ -24,8 +24,10 @@ module control (
 
     input exception,
     input interrupt_pending,
+
     input debug,
     input abstract,
+    input step,
 
     control_signals_if control_signals
 );
@@ -167,7 +169,7 @@ module control (
                     control_signals.write_csr = 1'b1;
                     `CONTROL__NEXT_INST
                 end
-                if (interrupt_pending) begin
+                if (interrupt_pending || debug || step) begin
                     `CONTROL__NEXT_INST
                 end
             end
@@ -238,7 +240,7 @@ module control (
             LOAD_W:     mcp_next = control_signals.mem_complete ? LOAD_1   : LOAD_W;
             STORE,
             STORE_W:    mcp_next = control_signals.mem_complete ? STORE_1  : STORE_W;
-            SYSTEM:     mcp_next = (control_signals.f3 != `ISA__FUNCT3_PRIV || interrupt_pending) ? (control_signals.mem_complete ? DISPATCH : PROLOGUE) : SYSTEM;
+            SYSTEM:     mcp_next = (control_signals.f3 != `ISA__FUNCT3_PRIV || interrupt_pending || debug || step) ? (control_signals.mem_complete ? DISPATCH : PROLOGUE) : SYSTEM;
             HALTED:     mcp_next = debug ? HALTED : PROLOGUE;
             ABS_REG:    mcp_next = control_signals.f3[0] ? ABS_EXEC : debug ? HALTED : PROLOGUE;
             ABS_EXEC:   mcp_next = debug ? HALTED : PROLOGUE;
