@@ -1,4 +1,5 @@
 `include "../system/arilla_bus_if.svh"
+`include "../debug/debug_if.svh"
 `include "control_signals_if.svh"
 `include "csr_if.svh"
 `include "isa.svh"
@@ -10,7 +11,8 @@ module rv_core (
     input nmi,
     input exti,
 
-    arilla_bus_if bus_interface
+    arilla_bus_if bus_interface,
+    debug_if      debug_interface
 );
     control_signals_if control_signals ();
     csr_if             csr_interface   ();
@@ -41,6 +43,7 @@ module rv_core (
     wire conflict;
     wire timer;
     wire interrupt_pending;
+    wire debug, halted;
 
     assign retire = control_signals.write_pc  && !exception;
     assign trap   = exception || interrupt || mret;
@@ -178,6 +181,8 @@ module rv_core (
         .rst_n            (rst_n),
         .exception        (exception),
         .interrupt_pending(interrupt_pending),
+        .debug            (debug),
+        .halted           (halted),
         .control_signals  (control_signals)
     );
 
@@ -192,9 +197,9 @@ module rv_core (
         .imm_in       (csri),
         .addr         (imm),
         .rs           (rs1_a),
-        .f3           (control_signals.f3),
+        .f3           (op),
         .write        (control_signals.write_csr),
-        .debug        (1'b0),
+        .debug        (debug),
         .retire       (retire),
         .csr_out      (csr_out),
         .invalid      (invalid_csr),
@@ -226,6 +231,15 @@ module rv_core (
         .exception        (exception),
         .interrupt        (interrupt),
         .interrupt_pending(interrupt_pending)
+    );
+
+    d_ctl d_ctl (
+        .clk        (clk),
+        .rst_n      (rst_n),
+        .debug      (debug),
+        .halted_ctrl(halted),
+        .ctrl       (control_signals),
+        .debug_if   (debug_interface)
     );
 
 endmodule

@@ -1,5 +1,7 @@
 `include "arilla_bus_if.svh"
 `include "system.svh"
+`include "../debug/dmi_if.svh"
+`include "../debug/debug_if.svh"
 
 module top (
     input clock_50,
@@ -24,17 +26,7 @@ module top (
     wire nmi   = !key[1];
     wire exti  = !key[2];
 
-    wire rst_n;
-
-    por #(
-        .Cycles(`SYSTEM__POR_TIME)
-    ) por_inst (
-        .clk  (clk),
-        .power(power),
-        .rst_n(rst_n)
-    );
-
-    assign led[0] = rst_n;
+    wire reset_n, hart_reset_n, rst_n;
 
     arilla_bus_if #(
         .DataWidth       (`SYSTEM__XLEN),
@@ -45,12 +37,40 @@ module top (
     assign bus_interface.inhibit   = sw[9];
     assign bus_interface.intercept = sw[8];
 
-    rv_core rv_core (
+    dmi_if #(
+        .DataWidth   (`SYSTEM__XLEN),
+        .AddressWidth(`SYSTEM__DMI_ALEN)
+    ) dmi_interface ();
+
+    debug_if debug_interface ();
+
+    por #(
+        .Cycles(`SYSTEM__POR_TIME)
+    ) por_inst (
+        .clk  (clk),
+        .power(power),
+        .rst_n(reset_n)
+    );
+
+    dm dm (
         .clk          (clk),
-        .rst_n        (rst_n),
-        .nmi          (nmi),
-        .exti         (exti),
+        .rst_n        (reset_n),
+        .reset_n      (rst_n),
+        .hart_reset_n (hart_reset_n),
+        .dmi          (dmi_interface),
+        .debug        (debug_interface),
         .bus_interface(bus_interface)
+    );
+
+    assign led[0] = rst_n;
+
+    rv_core rv_core (
+        .clk            (clk),
+        .rst_n          (hart_reset_n),
+        .nmi            (nmi),
+        .exti           (exti),
+        .bus_interface  (bus_interface),
+        .debug_interface(debug_interface)
     );
 
     memory #(

@@ -70,7 +70,7 @@ module int_ctl (
 
     assign `CSR__MI_MEI(csrs.MIP_in) = exti;
     assign `CSR__MI_MTI(csrs.MIP_in) = timer;
-    assign csrs.MIP_write = 1'b1;
+    assign csrs.MIP_write            = 1'b1;
 
     wire interrupt_enabled = `CSR__MSTATUS_MIE(csrs.MSTATUS_reg);
     wire exti_enabled      = `CSR__MI_MEI(csrs.MIE_reg);

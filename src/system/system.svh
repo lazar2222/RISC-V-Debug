@@ -22,4 +22,6 @@
 //`define SYSTEM__POR_TIME 50_000_000
 `define SYSTEM__POR_TIME 1
 
+`define SYSTEM__DMI_ALEN 7
+
 `endif  //SYSTEM__SVH
