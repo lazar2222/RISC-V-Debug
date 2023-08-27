@@ -28,7 +28,7 @@ module dm (
 
     wire dm_reset = !rst_n || !dmactive;
 
-    reg ndmreset, hartreset;
+    reg ndmreset, hartreset, hart_reset_tail;
     reg havereset, resumeack;
     reg haltreq, resethaltreq;
 
@@ -51,20 +51,22 @@ module dm (
     assign dmi.data = (dmi.address == `DEBUG__DMSTATUS  && dmi.read) ? dmstatus  : {32{1'bz}};
     assign dmi.data = (dmi.address == `DEBUG__DMCONTROL && dmi.read) ? dmcontrol : {32{1'bz}};
 
-    assign debug.halt_req   = haltreq || (resethaltreq && hart_reset);
+    assign debug.halt_req   = haltreq || (resethaltreq && hart_reset_tail);
     assign debug.resume_req = resumereq;
 
     always @(posedge clk) begin
         if (dm_reset) begin
-            ndmreset     <= 1'b0;
-            hartreset    <= 1'b0;
-            havereset    <= 1'b0;
-            resumeack    <= 1'b0;
-            haltreq      <= 1'b0;
-            resethaltreq <= 1'b0;
+            ndmreset        <= 1'b0;
+            hartreset       <= 1'b0;
+            havereset       <= 1'b0;
+            resumeack       <= 1'b0;
+            haltreq         <= 1'b0;
+            resethaltreq    <= 1'b0;
+            hart_reset_tail <= 1'b0;
         end else begin
-            havereset <= (havereset || hart_reset) && !ackhavereset;
-            resumeack <= (resumeack || running)    && !resumereq;
+            havereset       <= (havereset || hart_reset) && !ackhavereset;
+            resumeack       <= (resumeack || running)    && !resumereq;
+            hart_reset_tail <= hart_reset;
             if (dmi.address == `DEBUG__DMCONTROL && dmi.write) begin
                 ndmreset     <= `DEBUG__DMCONTROL_NDMRESET(dmi.data);
                 hartreset    <= `DEBUG__DMCONTROL_HARTRESET(dmi.data);
