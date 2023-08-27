@@ -32,15 +32,15 @@ add wave -noupdate -expand -group {bus_interface} /testbench/top/bus_interface/*
 add wave -noupdate -expand -group {dmi_interface} /testbench/top/dmi_interface/*
 add wave -noupdate -expand -group {debug_interface} /testbench/top/debug_interface/*
 add wave -noupdate -expand -group {dm} /testbench/top/dm/*
-add wave -noupdate -expand -group {rv_core} /testbench/top/rv_core/*
-add wave -noupdate -expand /testbench/top/rv_core/reg_file/registers
-add wave -noupdate -expand -group {control_signals} /testbench/top/rv_core/control_signals/*
+add wave -noupdate -expand -group {d_ctl} /testbench/top/rv_core/d_ctl/*
 add wave -noupdate -expand -group {control} -radix MCP /testbench/top/rv_core/control/*
+add wave -noupdate -expand -group {rv_core} /testbench/top/rv_core/*
+add wave -noupdate -expand -group {control_signals} /testbench/top/rv_core/control_signals/*
+add wave -noupdate -expand /testbench/top/rv_core/reg_file/registers
 add wave -noupdate -expand -group {mem_interface} /testbench/top/rv_core/mem_interface/*
 add wave -noupdate -expand -group {csr_interface} /testbench/top/rv_core/csr_interface/*
 add wave -noupdate -expand -group {csr} /testbench/top/rv_core/csr/*
 add wave -noupdate -expand -group {int_ctl} /testbench/top/rv_core/int_ctl/*
-add wave -noupdate -expand -group {d_ctl} /testbench/top/rv_core/d_ctl/*
 add wave -noupdate -expand -group {memory} /testbench/top/memory/*
 TreeUpdate [SetDefaultTree]
 WaveRestoreCursors {{Cursor 1} {0 ps} 0}

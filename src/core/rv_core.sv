@@ -43,14 +43,14 @@ module rv_core (
     wire conflict;
     wire timer;
     wire interrupt_pending;
-    wire debug, abstract, step;
+    wire debug, halted, abstract, step;
 
     assign retire = control_signals.write_pc  && !exception;
     assign trap   = exception || interrupt || mret;
 
     assign ir_in  = mem_out;
 
-    assign next_pc  = trap     ? trap_pc                                                                    : alu_pc;
+    assign next_pc  = abstract ? 32'hFFFFFF80             : trap                     ? trap_pc              : alu_pc;
     assign mem_addr = abstract ? debug_interface.data1_in : control_signals.addr_sel ? shadow_pc            : alu_out;
     assign mem_size = abstract ? control_signals.f3       : control_signals.addr_sel ? `ISA__INST_LOAD_SIZE : control_signals.f3;
     assign mem_in   = abstract ? debug_interface.data0_in                                                   : rs2;
@@ -187,6 +187,7 @@ module rv_core (
         .exception        (exception),
         .interrupt_pending(interrupt_pending),
         .debug            (debug),
+        .halted           (halted),
         .abstract         (abstract),
         .step             (step),
         .control_signals  (control_signals)
@@ -245,11 +246,12 @@ module rv_core (
         .clk        (clk),
         .rst_n      (rst_n),
         .nmi        (nmi),
-        .ebreak     (ebreak),
+        .eb         (ebreak),
         .malign     (malign),
         .fault      (fault),
         .invalid_csr(invalid_csr),
         .debug      (debug),
+        .halted_ctrl(halted),
         .abstract   (abstract),
         .step       (step),
         .csrs       (csr_interface),

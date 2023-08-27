@@ -26,6 +26,7 @@ module control (
     input interrupt_pending,
 
     input debug,
+    input halted,
     input abstract,
     input step,
 
@@ -107,6 +108,7 @@ module control (
         control_signals.alu_insel2     = `CONTROL_SIGNALS__ALU2_RS;
         control_signals.abstract_write = 1'b0;
         control_signals.abstract_done  = 1'b0;
+        control_signals.progbuf        = 1'b0;
         case (mcp_addr)
             PROLOGUE: begin
                 `CONTROL__READ_INST
@@ -195,7 +197,8 @@ module control (
                 control_signals.abstract_done = control_signals.f3[0] ? 1'b0 : 1'b1;
             end
             ABS_EXEC: begin
-
+                control_signals.progbuf     = 1'b1;
+                control_signals.write_pc_ne = 1'b1;
             end
             ABS_RMEM: begin
                 control_signals.mem_read = 1'b1;
@@ -214,7 +217,7 @@ module control (
             default: begin
             end
         endcase
-        if (exception) begin
+        if (exception && !debug) begin
             control_signals.write_rd    = 1'b0;
             control_signals.write_csr   = 1'b0;
             control_signals.mem_write   = 1'b0;
@@ -243,17 +246,17 @@ module control (
             SYSTEM:     mcp_next = (control_signals.f3 != `ISA__FUNCT3_PRIV || interrupt_pending || debug || step) ? (control_signals.mem_complete ? DISPATCH : PROLOGUE) : SYSTEM;
             HALTED:     mcp_next = debug ? HALTED : PROLOGUE;
             ABS_REG:    mcp_next = control_signals.f3[0] ? ABS_EXEC : debug ? HALTED : PROLOGUE;
-            ABS_EXEC:   mcp_next = debug ? HALTED : PROLOGUE;
+            ABS_EXEC:   mcp_next = PROLOGUE;
             ABS_RMEM:   mcp_next = control_signals.mem_complete ? ABS_RMEM_1 : ABS_RMEM;
             ABS_RMEM_1: mcp_next = debug ? HALTED : PROLOGUE;
             ABS_WMEM:   mcp_next = control_signals.mem_complete ? ABS_WMEM_1 : ABS_WMEM;
             ABS_WMEM_1: mcp_next = debug ? HALTED : PROLOGUE;
             default:    mcp_next = mcp_addr + 5'd1;
         endcase
-        if (exception) begin
+        if (exception && !debug) begin
             mcp_next = control_signals.mem_complete ? DISPATCH : PROLOGUE;
         end
-        if (debug && (mcp_next == DISPATCH || mcp_next == PROLOGUE)) begin
+        if (debug && !halted && (mcp_next == DISPATCH || mcp_next == PROLOGUE)) begin
             mcp_next = HALTED;
         end
     end
