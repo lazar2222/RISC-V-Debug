@@ -65,101 +65,50 @@ module csr #(
     wire [(2*`ISA__XLEN)-1:0] mcycle      = {csr_interface.MCYCLEH_reg,csr_interface.MCYCLE_reg};
     wire [(2*`ISA__XLEN)-1:0] mcycle_next = mcycle + 1'b1;
 
-    assign csr_interface.MCYCLEH_in  = mcycle_next[(2*`ISA__XLEN)-1:`ISA__XLEN];
-    assign csr_interface.MCYCLE_in = mcycle_next[`ISA__XLEN-1:0];
+    assign csr_interface.MCYCLEH_in    = mcycle_next[(2*`ISA__XLEN)-1:`ISA__XLEN];
+    assign csr_interface.MCYCLE_in     = mcycle_next[`ISA__XLEN-1:0];
     assign csr_interface.MCYCLE_write  = !`CSR__MCOUNTINHIBIT_CY(csr_interface.MCOUNTINHIBIT_reg);
     assign csr_interface.MCYCLEH_write = !`CSR__MCOUNTINHIBIT_CY(csr_interface.MCOUNTINHIBIT_reg);
 
     wire [(2*`ISA__XLEN)-1:0] minstret      = {csr_interface.MINSTRETH_reg,csr_interface.MINSTRET_reg};
     wire [(2*`ISA__XLEN)-1:0] minstret_next = minstret + 1'b1;
 
-    assign csr_interface.MINSTRETH_in  = minstret_next[(2*`ISA__XLEN)-1:`ISA__XLEN];
-    assign csr_interface.MINSTRET_in = minstret_next[`ISA__XLEN-1:0];
+    assign csr_interface.MINSTRETH_in    = minstret_next[(2*`ISA__XLEN)-1:`ISA__XLEN];
+    assign csr_interface.MINSTRET_in     = minstret_next[`ISA__XLEN-1:0];
     assign csr_interface.MINSTRET_write  = retire && !`CSR__MCOUNTINHIBIT_IR(csr_interface.MCOUNTINHIBIT_reg);
     assign csr_interface.MINSTRETH_write = retire && !`CSR__MCOUNTINHIBIT_IR(csr_interface.MCOUNTINHIBIT_reg);
 
     reg [(2*`ISA__XLEN)-1:0] mtime;
     reg [(2*`ISA__XLEN)-1:0] mtimecmp;
-    reg [    `ISA__XLEN-1:0] tmp;
 
-    localparam int DataWidth             = $bits(bus_interface.data_ctp);
-    localparam int AddressWidth          = $bits(bus_interface.address);
-    localparam int BytesPerWord          = $bits(bus_interface.byte_enable);
-    localparam int ByteSize              = DataWidth / BytesPerWord;
-    localparam int SizeWords             = 4;
-    localparam int ByteAddressWidth      = AddressWidth + $clog2(BytesPerWord);
-    localparam int LocalAddressWidth     = $clog2(SizeWords);
-    localparam int LocalByteAddressWidth = LocalAddressWidth + $clog2(BytesPerWord);
-    localparam int DeviceAddressWidth    = AddressWidth - LocalAddressWidth;
-    localparam int DeviceAddress         = BaseAddress[ByteAddressWidth-1:LocalByteAddressWidth];
-
-    wire [DeviceAddressWidth-1:0] device_address = bus_interface.address[AddressWidth-1:LocalAddressWidth];
-    reg  [ LocalAddressWidth-1:0] local_address;
-    wire [      BytesPerWord-1:0] byte_enable    = bus_interface.byte_enable;
-    wire [         DataWidth-1:0] data_in        = bus_interface.data_ctp;
-    wire [         DataWidth-1:0] data_mask;
-    reg  [         DataWidth-1:0] data_out;
-
-    genvar i;
-    generate
-        for(i = 0; i < BytesPerWord; i++) begin : g_mask
-            assign data_mask[ByteSize*i+:ByteSize] = {ByteSize{byte_enable[i]}};
-        end
-    endgenerate
-
-    reg  read_hit;
-    wire mem_hit     = device_address == DeviceAddress;
-    wire write_hit   = mem_hit && bus_interface.write;
-    wire data_enable = read_hit && !bus_interface.intercept;
-
-    assign bus_interface.hit      = mem_hit     ? 1'b1     : 1'bz;
-    assign bus_interface.data_ptc = data_enable ? data_out : {DataWidth{1'bz}};
+    wire [(4*`ISA__XLEN)-1:0] memory = {mtime,mtimecmp};
+    wire [    `ISA__XLEN-1:0] data_periph_out;
+    wire [               3:0] data_periph_write;
 
     always @(posedge clk) begin
         if (!rst_n) begin
-            read_hit <= 1'b0;
+            mtime    <= {2*`ISA__XLEN{1'b0}};
+            mtimecmp <= {2*`ISA__XLEN{1'b1}};
         end else begin
-            read_hit <= mem_hit && bus_interface.read;
+            mtime <= mtime + 1'd1;
+            if (data_periph_write[0]) begin mtime[`ISA__XLEN-1:0]                 <= data_periph_out; end
+            if (data_periph_write[1]) begin mtime[(2*`ISA__XLEN)-1:`ISA__XLEN]    <= data_periph_out; end
+            if (data_periph_write[2]) begin mtimecmp[`ISA__XLEN-1:0]              <= data_periph_out; end
+            if (data_periph_write[3]) begin mtimecmp[(2*`ISA__XLEN)-1:`ISA__XLEN] <= data_periph_out; end
         end
     end
 
-    always @(posedge clk) begin
-        if (!rst_n) begin
-            mtime         <= {2*`ISA__XLEN{1'b0}};
-            mtimecmp      <= {2*`ISA__XLEN{1'b1}};
-            local_address <= {LocalAddressWidth{1'b0}};
-        end else begin
-            local_address <= bus_interface.address[LocalAddressWidth-1:0];
-            mtime         <= mtime + 1'd1;
-            if (write_hit) begin
-                case (local_address)
-                    `CSR__MTIME_OFFSET:     tmp = mtime[`ISA__XLEN-1:0];
-                    `CSR__MTIMEH_OFFSET:    tmp = mtime[(2*`ISA__XLEN)-1:`ISA__XLEN];
-                    `CSR__MTIMECMP_OFFSET:  tmp = mtimecmp[`ISA__XLEN-1:0];
-                    `CSR__MTIMECMPH_OFFSET: tmp = mtimecmp[(2*`ISA__XLEN)-1:`ISA__XLEN];
-                    default:                tmp = `ISA__ZERO;
-                endcase
-                tmp = (data_in & data_mask) | (tmp & ~data_mask);
-                case (local_address)
-                    `CSR__MTIME_OFFSET:     mtime[`ISA__XLEN-1:0]                 <= tmp;
-                    `CSR__MTIMEH_OFFSET:    mtime[(2*`ISA__XLEN)-1:`ISA__XLEN]    <= tmp;
-                    `CSR__MTIMECMP_OFFSET:  mtimecmp[`ISA__XLEN-1:0]              <= tmp;
-                    `CSR__MTIMECMPH_OFFSET: mtimecmp[(2*`ISA__XLEN)-1:`ISA__XLEN] <= tmp;
-                    default:                                                            ;
-                endcase
-            end
-        end
-    end
-
-    always_comb begin
-        case (local_address)
-            `CSR__MTIME_OFFSET:     data_out = mtime[`ISA__XLEN-1:0];
-            `CSR__MTIMEH_OFFSET:    data_out = mtime[(2*`ISA__XLEN)-1:`ISA__XLEN];
-            `CSR__MTIMECMP_OFFSET:  data_out = mtimecmp[`ISA__XLEN-1:0];
-            `CSR__MTIMECMPH_OFFSET: data_out = mtimecmp[(2*`ISA__XLEN)-1:`ISA__XLEN];
-            default:                data_out = `ISA__ZERO;
-        endcase
-    end
+    periph_mem_interface #(
+        .BaseAddress(`ISA__TIME_BASE),
+        .SizeWords  (4)
+    ) periph_mem_interface_inst (
+        .clk              (clk),
+        .rst_n            (rst_n),
+        .bus_interface    (bus_interface),
+        .data_periph_in   (memory),
+        .data_periph_out  (data_periph_out),
+        .data_periph_write(data_periph_write)
+    );
 
     assign timeint = mtime >= mtimecmp;
 

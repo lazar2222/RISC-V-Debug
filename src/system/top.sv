@@ -27,7 +27,7 @@ module top (
     wire rst_n;
 
     por #(
-        .Cycles(50_000_000)
+        .Cycles(`SYSTEM__POR_TIME)
     ) por_inst (
         .clk  (clk),
         .power(power),

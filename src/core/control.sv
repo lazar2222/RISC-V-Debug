@@ -69,7 +69,6 @@ module control (
         || mcp_reg == STORE_1
         );
 
-    assign control_signals.load_op  = mcp_reg == LOAD_1;
     assign control_signals.write_pc = control_signals.write_pc_ne || control_signals.write_pc_ex;
 
     always_comb begin

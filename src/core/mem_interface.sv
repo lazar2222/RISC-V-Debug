@@ -41,10 +41,11 @@ module mem_interface (
     output reg                        fault;
     output reg [ByteAddressWidth-1:0] address_reg;
 
-    reg [        SizeSize-1:0] size_reg;
-    reg                        sign_reg;
+    reg [SizeSize-1:0] size_reg;
+    reg                sign_reg;
 
     wire [SizeSize-1:0] size = sign_size[SizeSize-1:0];
+    wire                sign = sign_size[SizeSize-1];
     wire [   MaxSize:0] maligns;
 
     assign maligns[0] = 1'b0;
@@ -66,7 +67,7 @@ module mem_interface (
         end else begin
             address_reg <= address;
             size_reg    <= size;
-            sign_reg    <= sign_size[SizeSize-1];
+            sign_reg    <= sign;
             malign      <= malign_w;
             fault       <= !bus_interface.hit;
         end

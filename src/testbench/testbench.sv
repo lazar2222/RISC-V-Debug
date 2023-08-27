@@ -13,7 +13,7 @@ module testbench ();
     always #50 clk = !clk;
 
     initial begin
-        clk = 1'b1;
+        clk   = 1'b1;
         rst_n = 1'b0;
         #100;
         rst_n = 1'b1;
@@ -36,7 +36,7 @@ module testbench ();
         .ByteSize        (`SYSTEM__BLEN)
     ) bus_interface ();
 
-    assign bus_interface.inhibit = inhibit;
+    assign bus_interface.inhibit   = inhibit;
     assign bus_interface.intercept = 1'b0;
 
     rv_core rv_core (

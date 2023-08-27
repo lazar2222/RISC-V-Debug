@@ -36,7 +36,8 @@ module int_ctl (
 );
     wire instruction_start = ctrl.write_ir;
     wire instruction_end   = ctrl.write_pc_ne;
-    wire load              = ctrl.load_op;
+    wire load              = ctrl.opcode == `ISA__OPCODE_LOAD;
+    wire store             = ctrl.opcode == `ISA__OPCODE_STORE;
     wire csr               = ctrl.opcode == `ISA__OPCODE_SYSTEM && ctrl.f3 != `ISA__FUNCT3_PRIV;
 
     wire inst_breakpoint = breakpoint   && instruction_start;
@@ -49,8 +50,8 @@ module int_ctl (
     wire ls_breakpoint   = breakpoint   && instruction_end;
     wire l_align         = malign       && instruction_end && load;
     wire l_fault         = fault        && instruction_end && load;
-    wire s_align         = malign       && instruction_end && !load;
-    wire s_fault         = fault        && instruction_end && !load;
+    wire s_align         = malign       && instruction_end && store;
+    wire s_fault         = fault        && instruction_end && store;
 
     assign exception =
     (  inst_breakpoint

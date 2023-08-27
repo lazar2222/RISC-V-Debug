@@ -19,7 +19,6 @@ interface control_signals_if;
     wire                          mem_complete;
     wire [`ISA__OPCODE_WIDTH-1:0] opcode;
     wire [`ISA__FUNCT3_WIDTH-1:0] f3;
-    reg                           load_op;
     reg                           write_pc_ne, write_pc_ex;
     reg                           write_pc, write_ir, write_rd, write_csr;
     reg                           mem_read, mem_write;
