@@ -17,7 +17,7 @@ module rv_core (
     control_signals_if control_signals ();
     csr_if             csr_interface   ();
 
-    wire [`ISA__XLEN-1:0] pc, shadow_pc, next_pc, alu_pc, trap_pc;
+    wire [`ISA__XLEN-1:0] pc, shadow_pc, next_pc, mid_pc, alu_pc, trap_pc, d_pc;
     wire [`ISA__XLEN-1:0] ir, ir_in;
     wire [`ISA__XLEN-1:0] rs1, rs2;
     reg  [`ISA__XLEN-1:0] rd;
@@ -43,15 +43,16 @@ module rv_core (
     wire conflict;
     wire timer;
     wire interrupt_pending;
-    wire debug, halted;
+    wire debug, halted, step, resuming;
 
-    assign retire = control_signals.write_pc  && !exception;
+    assign retire = control_signals.write_pc_ne && !exception;
     assign trap   = exception || interrupt || mret;
 
     assign ir_in  = mem_out;
     assign mem_in = rs2;
 
-    assign next_pc  = trap                     ? trap_pc              : alu_pc;
+    assign mid_pc   = resuming                 ? d_pc                 : alu_pc;
+    assign next_pc  = trap                     ? trap_pc              : mid_pc;
     assign mem_addr = control_signals.addr_sel ? shadow_pc            : alu_out;
     assign mem_size = control_signals.addr_sel ? `ISA__INST_LOAD_SIZE : control_signals.f3;
 
@@ -183,6 +184,7 @@ module rv_core (
         .interrupt_pending(interrupt_pending),
         .debug            (debug),
         .halted           (halted),
+        .step             (step),
         .control_signals  (control_signals)
     );
 
@@ -199,7 +201,7 @@ module rv_core (
         .rs           (rs1_a),
         .f3           (op),
         .write        (control_signals.write_csr),
-        .debug        (debug),
+        .debug        (halted),
         .retire       (retire),
         .csr_out      (csr_out),
         .invalid      (invalid_csr),
@@ -213,7 +215,9 @@ module rv_core (
         .nmi              (nmi),
         .exti             (exti),
         .timer            (timer),
-        .breakpoint       (1'b0),
+        .dbg              (debug),
+        .step             (step),
+        .breakp           (1'b0),
         .fault            (fault),
         .invalid_inst     (invalid_inst),
         .invalid_csr      (invalid_csr),
@@ -224,7 +228,7 @@ module rv_core (
         .mret             (mret),
         .conflict         (conflict),
         .pc               (pc),
-        .next_pc          (next_pc),
+        .next_pc          (mid_pc),
         .mem_addr         (mem_addr_reg),
         .ir               (ir),
         .tvec             (trap_pc),
@@ -236,8 +240,16 @@ module rv_core (
     d_ctl d_ctl (
         .clk        (clk),
         .rst_n      (rst_n),
+        .nmi        (nmi),
+        .interrupt  (interrupt),
+        .pc_reg     (pc),
+        .pc_next    (next_pc),
         .debug      (debug),
         .halted_ctrl(halted),
+        .step_en    (step),
+        .resuming   (resuming),
+        .dpc_out    (d_pc),
+        .csrs       (csr_interface),
         .ctrl       (control_signals),
         .debug_if   (debug_interface)
     );

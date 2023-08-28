@@ -40,6 +40,11 @@
 `define CSR__MCOUNTINHIBIT    12'h320
 `define CSR__MHPMEVENT(i)    (12'h320 + i)
 
+`define CSR__DCSR             12'h7B0
+`define CSR__DPC              12'h7B1
+`define CSR__DSCRATCH0        12'h7B2
+`define CSR__DSCRATCH1        12'h7B3
+
 `define CSR__MCYCLE_MASK         32'hFFFFFFFF
 `define CSR__MCYCLEH_MASK        32'hFFFFFFFF
 `define CSR__MINSTRET_MASK       32'hFFFFFFFF
@@ -55,6 +60,11 @@
 `define CSR__MTVAL_MASK          32'hFFFFFFFF
 `define CSR__MSCRATCH_MASK       32'hFFFFFFFF
 `define CSR__MCOUNTINHIBIT_MASK  32'h00000005
+
+`define CSR__DCSR_MASK           32'h0000BE04
+`define CSR__DPC_MASK            32'hFFFFFFFC
+`define CSR__DSCRATCH0_MASK      32'hFFFFFFFF
+`define CSR__DSCRATCH1_MASK      32'hFFFFFFFF
 
 `define CSR__MCYCLE_VALUE        32'h00000000
 `define CSR__MCYCLEH_VALUE       32'h00000000
@@ -83,6 +93,11 @@
 `define CSR__MSCRATCH_VALUE      32'h00000000
 `define CSR__MCOUNTINHIBIT_VALUE 32'h00000000
 
+`define CSR__DCSR_VALUE          32'h40000003
+`define CSR__DPC_VALUE           32'h00000000
+`define CSR__DSCRATCH0_VALUE     32'h00000000
+`define CSR__DSCRATCH1_VALUE     32'h00000000
+
 `define CSR__MSTATUS_MPP(csr)      csr[12:11]
 `define CSR__MSTATUS_MPIE(csr)     csr[7]
 `define CSR__MSTATUS_MIE(csr)      csr[3]
@@ -95,6 +110,12 @@
 
 `define CSR__MCOUNTINHIBIT_IR(csr) csr[2]
 `define CSR__MCOUNTINHIBIT_CY(csr) csr[0]
+
+`define CSR__DCSR_EBREAKM(csr)     csr[15]
+`define CSR__DCSR_STEPIE(csr)      csr[11]
+`define CSR__DCSR_STOPCOUNT(csr)   csr[10]
+`define CSR__DCSR_STOPTIME(csr)    csr[9]
+`define CSR__DCSR_STEP(csr)        csr[2]
 
 `define CSR__MCAUSE_TIMER        {1'b1,31'd7}
 `define CSR__MCAUSE_EXTI         {1'b1,31'd11}
@@ -174,6 +195,12 @@
 `TARGET(MTVAL)         \
 `TARGET(MSCRATCH)      \
 `TARGET(MCOUNTINHIBIT) \
+
+`define CSRGEN__FOREACH_DEBUG(TARGET) \
+`TARGET(DCSR)      \
+`TARGET(DPC)       \
+`TARGET(DSCRATCH0) \
+`TARGET(DSCRATCH1) \
 
 `define CSRGEN__GENERATE_INTERFACE(csr) \
 reg  [`ISA__XLEN-1:0] ``csr``_reg;   \

@@ -26,33 +26,15 @@ module control (
 
     input debug,
     input halted,
+    input step,
 
     control_signals_if control_signals
 );
-    localparam logic [`ISA__OPCODE_WIDTH-1:0] PROLOGUE   = 5'b10_000;
-    localparam logic [`ISA__OPCODE_WIDTH-1:0] DISPATCH   = 5'b10_001;
-    localparam logic [`ISA__OPCODE_WIDTH-1:0] LUI        = `ISA__OPCODE_LUI;
-    localparam logic [`ISA__OPCODE_WIDTH-1:0] AUIPC      = `ISA__OPCODE_AUIPC;
-    localparam logic [`ISA__OPCODE_WIDTH-1:0] JAL        = `ISA__OPCODE_JAL;
-    localparam logic [`ISA__OPCODE_WIDTH-1:0] JALR       = `ISA__OPCODE_JALR;
-    localparam logic [`ISA__OPCODE_WIDTH-1:0] BRANCH     = `ISA__OPCODE_BRANCH;
-    localparam logic [`ISA__OPCODE_WIDTH-1:0] LOAD       = `ISA__OPCODE_LOAD;
-    localparam logic [`ISA__OPCODE_WIDTH-1:0] LOAD_W     = `ISA__OPCODE_LOAD  + 5'd1;
-    localparam logic [`ISA__OPCODE_WIDTH-1:0] LOAD_1     = `ISA__OPCODE_LOAD  + 5'd2;
-    localparam logic [`ISA__OPCODE_WIDTH-1:0] STORE      = `ISA__OPCODE_STORE;
-    localparam logic [`ISA__OPCODE_WIDTH-1:0] STORE_W    = `ISA__OPCODE_STORE + 5'd1;
-    localparam logic [`ISA__OPCODE_WIDTH-1:0] STORE_1    = `ISA__OPCODE_STORE + 5'd2;
-    localparam logic [`ISA__OPCODE_WIDTH-1:0] OPIMM      = `ISA__OPCODE_OPIMM;
-    localparam logic [`ISA__OPCODE_WIDTH-1:0] OP         = `ISA__OPCODE_OP;
-    localparam logic [`ISA__OPCODE_WIDTH-1:0] MISCMEM    = `ISA__OPCODE_MISCMEM;
-    localparam logic [`ISA__OPCODE_WIDTH-1:0] SYSTEM     = `ISA__OPCODE_SYSTEM;
-    localparam logic [`ISA__OPCODE_WIDTH-1:0] HALTED     = 5'b01_111;
-
     reg [`ISA__OPCODE_WIDTH-1:0] mcp_reg, mcp_next, mcp_addr;
 
     always @(posedge clk) begin
         if (!rst_n) begin
-            mcp_reg <= PROLOGUE;
+            mcp_reg <= `CONTROL_SIGNALS__PROLOGUE;
         end else begin
             mcp_reg <= mcp_next;
         end
@@ -60,21 +42,22 @@ module control (
 
     always_comb begin
         mcp_addr = mcp_reg;
-        if (mcp_reg == DISPATCH) begin
+        if (mcp_reg == `CONTROL_SIGNALS__DISPATCH) begin
             mcp_addr = control_signals.opcode;
         end
     end
 
     assign control_signals.write_ir = !
-        (  mcp_reg == PROLOGUE
-        || mcp_reg == LOAD_W
-        || mcp_reg == LOAD_1
-        || mcp_reg == STORE_W
-        || mcp_reg == STORE_1
-        || mcp_reg == HALTED
+        (  mcp_reg == `CONTROL_SIGNALS__PROLOGUE
+        || mcp_reg == `CONTROL_SIGNALS__LOAD_W
+        || mcp_reg == `CONTROL_SIGNALS__LOAD_1
+        || mcp_reg == `CONTROL_SIGNALS__STORE_W
+        || mcp_reg == `CONTROL_SIGNALS__STORE_1
+        || mcp_reg == `CONTROL_SIGNALS__HALTED
+        || mcp_reg == `CONTROL_SIGNALS__RESUMING
         );
 
-    assign control_signals.halted   = mcp_reg == HALTED;
+    assign control_signals.mcp_addr = mcp_addr;
     assign control_signals.write_pc = control_signals.write_pc_ne || control_signals.write_pc_ex;
 
     always_comb begin
@@ -89,70 +72,73 @@ module control (
         control_signals.alu_insel1  = `CONTROL_SIGNALS__ALU1_RS;
         control_signals.alu_insel2  = `CONTROL_SIGNALS__ALU2_RS;
         case (mcp_addr)
-            PROLOGUE: begin
+            `CONTROL_SIGNALS__PROLOGUE: begin
                 `CONTROL__READ_INST
             end
-            LUI: begin
+            `CONTROL_SIGNALS__LUI: begin
                 control_signals.alu_insel1 = `CONTROL_SIGNALS__ALU1_ZR;
                 control_signals.alu_insel2 = `CONTROL_SIGNALS__ALU2_IM;
                 `CONTROL__WRITE_ALU
 
                 `CONTROL__NEXT_INST
             end
-            AUIPC: begin
+            `CONTROL_SIGNALS__AUIPC: begin
                 control_signals.alu_insel1 = `CONTROL_SIGNALS__ALU1_PC;
                 control_signals.alu_insel2 = `CONTROL_SIGNALS__ALU2_IM;
                 `CONTROL__WRITE_ALU
 
                 `CONTROL__NEXT_INST
             end
-            JAL, JALR: begin
+            `CONTROL_SIGNALS__JAL, `CONTROL_SIGNALS__JALR: begin
                 control_signals.alu_insel1 = `CONTROL_SIGNALS__ALU1_PC;
                 control_signals.alu_insel2 = `CONTROL_SIGNALS__ALU2_IS;
                 `CONTROL__WRITE_ALU
 
                 `CONTROL__NEXT_INST
             end
-            BRANCH, STORE_1, MISCMEM: begin
+            `CONTROL_SIGNALS__BRANCH, `CONTROL_SIGNALS__STORE_1, `CONTROL_SIGNALS__MISCMEM: begin
                 `CONTROL__NEXT_INST
             end
-            LOAD, LOAD_W: begin
+            `CONTROL_SIGNALS__LOAD, `CONTROL_SIGNALS__LOAD_W: begin
                 `CONTROL__ALU_ADDRESS
                 control_signals.mem_read   = 1'b1;
             end
-            LOAD_1: begin
+            `CONTROL_SIGNALS__LOAD_1: begin
                 `CONTROL__WRITE_MEM
 
                 `CONTROL__NEXT_INST
             end
-            STORE, STORE_W: begin
+            `CONTROL_SIGNALS__STORE, `CONTROL_SIGNALS__STORE_W: begin
                 `CONTROL__ALU_ADDRESS
                 control_signals.mem_write  = 1'b1;
             end
-            OPIMM: begin
+            `CONTROL_SIGNALS__OPIMM: begin
                 control_signals.alu_insel1 = `CONTROL_SIGNALS__ALU1_RS;
                 control_signals.alu_insel2 = `CONTROL_SIGNALS__ALU2_IM;
                 `CONTROL__WRITE_ALU
 
                 `CONTROL__NEXT_INST
             end
-            OP: begin
+            `CONTROL_SIGNALS__OP: begin
                 control_signals.alu_insel1 = `CONTROL_SIGNALS__ALU1_RS;
                 control_signals.alu_insel2 = `CONTROL_SIGNALS__ALU2_RS;
                 `CONTROL__WRITE_ALU
 
                 `CONTROL__NEXT_INST
             end
-            SYSTEM: begin
+            `CONTROL_SIGNALS__SYSTEM: begin
                 if (control_signals.f3 != `ISA__FUNCT3_PRIV) begin
                     control_signals.rd_sel    = `CONTROL_SIGNALS__RD_CSR;
                     control_signals.write_rd  = 1'b1;
                     control_signals.write_csr = 1'b1;
                     `CONTROL__NEXT_INST
                 end
-                if (interrupt_pending) begin
+                if (interrupt_pending || debug || step) begin
                     `CONTROL__NEXT_INST
                 end
+            end
+            `CONTROL_SIGNALS__RESUMING: begin
+                control_signals.write_pc_ex = 1'b1;
             end
             default: begin
             end
@@ -168,30 +154,33 @@ module control (
 
     always_comb begin
         case (mcp_addr)
-            PROLOGUE,
-            LUI,
-            AUIPC,
-            JAL,
-            JALR,
-            BRANCH,
-            OPIMM,
-            OP,
-            MISCMEM,
-            LOAD_1,
-            STORE_1: mcp_next = control_signals.mem_complete ? DISPATCH : PROLOGUE;
-            LOAD,
-            LOAD_W:  mcp_next = control_signals.mem_complete ? LOAD_1   : LOAD_W;
-            STORE,
-            STORE_W: mcp_next = control_signals.mem_complete ? STORE_1  : STORE_W;
-            SYSTEM:  mcp_next = (control_signals.f3 != `ISA__FUNCT3_PRIV || interrupt_pending) ? (control_signals.mem_complete ? DISPATCH : PROLOGUE) : SYSTEM;
-            HALTED:  mcp_next = debug ? HALTED : PROLOGUE;
-            default: mcp_next = mcp_addr + 5'd1;
+            `CONTROL_SIGNALS__PROLOGUE,
+            `CONTROL_SIGNALS__LUI,
+            `CONTROL_SIGNALS__AUIPC,
+            `CONTROL_SIGNALS__JAL,
+            `CONTROL_SIGNALS__JALR,
+            `CONTROL_SIGNALS__BRANCH,
+            `CONTROL_SIGNALS__OPIMM,
+            `CONTROL_SIGNALS__OP,
+            `CONTROL_SIGNALS__MISCMEM,
+            `CONTROL_SIGNALS__LOAD_1,
+            `CONTROL_SIGNALS__STORE_1:  mcp_next = control_signals.mem_complete ? `CONTROL_SIGNALS__DISPATCH : `CONTROL_SIGNALS__PROLOGUE;
+            `CONTROL_SIGNALS__LOAD,
+            `CONTROL_SIGNALS__LOAD_W:   mcp_next = control_signals.mem_complete ? `CONTROL_SIGNALS__LOAD_1   : `CONTROL_SIGNALS__LOAD_W;
+            `CONTROL_SIGNALS__STORE,
+            `CONTROL_SIGNALS__STORE_W:  mcp_next = control_signals.mem_complete ? `CONTROL_SIGNALS__STORE_1  : `CONTROL_SIGNALS__STORE_W;
+            `CONTROL_SIGNALS__SYSTEM:   mcp_next = (control_signals.f3 != `ISA__FUNCT3_PRIV || interrupt_pending || debug || step)
+                                            ? (control_signals.mem_complete ? `CONTROL_SIGNALS__DISPATCH : `CONTROL_SIGNALS__PROLOGUE)
+                                            : `CONTROL_SIGNALS__SYSTEM;
+            `CONTROL_SIGNALS__HALTED:   mcp_next = debug ? `CONTROL_SIGNALS__HALTED : `CONTROL_SIGNALS__RESUMING;
+            `CONTROL_SIGNALS__RESUMING: mcp_next = `CONTROL_SIGNALS__PROLOGUE;
+            default:                    mcp_next = mcp_addr + 5'd1;
         endcase
         if (exception) begin
-            mcp_next = control_signals.mem_complete ? DISPATCH : PROLOGUE;
+            mcp_next = debug ? `CONTROL_SIGNALS__HALTED : control_signals.mem_complete ? `CONTROL_SIGNALS__DISPATCH : `CONTROL_SIGNALS__PROLOGUE;
         end
-        if (debug && !halted && (mcp_next == DISPATCH || mcp_next == PROLOGUE)) begin
-            mcp_next = HALTED;
+        if (debug && !halted && (mcp_next == `CONTROL_SIGNALS__DISPATCH || mcp_next == `CONTROL_SIGNALS__PROLOGUE)) begin
+            mcp_next = `CONTROL_SIGNALS__HALTED;
         end
     end
 endmodule

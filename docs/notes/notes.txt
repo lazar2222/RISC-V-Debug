@@ -1,8 +1,1 @@
 early breakpoint
-
-Debug mode cause
-	2 Trigger		4
-	1 ebreak		3
-	5 ResetHalt		2
-	3 HaltReq		1
-	4 SingleStep	0

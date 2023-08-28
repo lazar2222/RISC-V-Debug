@@ -13,4 +13,9 @@
 `define DEBUG__DMCONTROL_NDMRESET(r)        r[1]
 `define DEBUG__DMCONTROL_DMACTIVE(r)        r[0]
 
+`define DEBUG__CAUSE_TRIGGER 3'd2
+`define DEBUG__CAUSE_EBREAK  3'd1
+`define DEBUG__CAUSE_HALTREQ 3'd3
+`define DEBUG__CAUSE_STEP    3'd4
+
 `endif  //DEBUG__SVH

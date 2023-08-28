@@ -15,11 +15,31 @@
 `define CONTROL_SIGNALS__ALU2_IM  2'b01
 `define CONTROL_SIGNALS__ALU2_IS  2'b10
 
+`define CONTROL_SIGNALS__PROLOGUE 5'b10_000
+`define CONTROL_SIGNALS__DISPATCH 5'b10_001
+`define CONTROL_SIGNALS__LUI      `ISA__OPCODE_LUI
+`define CONTROL_SIGNALS__AUIPC    `ISA__OPCODE_AUIPC
+`define CONTROL_SIGNALS__JAL      `ISA__OPCODE_JAL
+`define CONTROL_SIGNALS__JALR     `ISA__OPCODE_JALR
+`define CONTROL_SIGNALS__BRANCH   `ISA__OPCODE_BRANCH
+`define CONTROL_SIGNALS__LOAD     `ISA__OPCODE_LOAD
+`define CONTROL_SIGNALS__LOAD_W   (`ISA__OPCODE_LOAD  + 5'd1)
+`define CONTROL_SIGNALS__LOAD_1   (`ISA__OPCODE_LOAD  + 5'd2)
+`define CONTROL_SIGNALS__STORE    `ISA__OPCODE_STORE
+`define CONTROL_SIGNALS__STORE_W  (`ISA__OPCODE_STORE + 5'd1)
+`define CONTROL_SIGNALS__STORE_1  (`ISA__OPCODE_STORE + 5'd2)
+`define CONTROL_SIGNALS__OPIMM    `ISA__OPCODE_OPIMM
+`define CONTROL_SIGNALS__OP       `ISA__OPCODE_OP
+`define CONTROL_SIGNALS__MISCMEM  `ISA__OPCODE_MISCMEM
+`define CONTROL_SIGNALS__SYSTEM   `ISA__OPCODE_SYSTEM
+`define CONTROL_SIGNALS__HALTED   5'b01_110
+`define CONTROL_SIGNALS__RESUMING 5'b01_111
+
 interface control_signals_if;
     wire                          mem_complete;
     wire [`ISA__OPCODE_WIDTH-1:0] opcode;
     wire [`ISA__FUNCT3_WIDTH-1:0] f3;
-    reg                           halted;
+    reg  [`ISA__OPCODE_WIDTH-1:0] mcp_addr;
     reg                           write_pc_ne, write_pc_ex;
     reg                           write_pc, write_ir, write_rd, write_csr;
     reg                           mem_read, mem_write;

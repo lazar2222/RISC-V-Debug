@@ -58,4 +58,11 @@ do dmi_write.do 10 40000005
 run 1100
 do dmi_write.do 10 20000005
 do dmi_write.do 10 00000001
-run 1100
+run 2800
+do dmi_write.do 10 80000001
+run 1700
+force -freeze sim:/testbench/top/rv_core/csr_interface/DPC_reg 32'h00000010 0
+run 500
+do dmi_write.do 10 40000001
+run 2300
+noforce sim:/testbench/top/rv_core/csr_interface/DPC_reg
