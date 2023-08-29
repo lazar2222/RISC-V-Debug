@@ -107,7 +107,7 @@ module csr #(
     periph_mem_interface #(
         .BaseAddress(`ISA__TIME_BASE),
         .SizeWords  (4)
-    ) periph_mem_interface_inst (
+    ) periph_mem_interface (
         .clk              (clk),
         .rst_n            (rst_n),
         .bus_interface    (bus_interface),

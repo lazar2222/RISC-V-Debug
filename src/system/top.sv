@@ -24,9 +24,15 @@ module top (
     wire clk   = clock_50;
     wire power = key[0];
     wire nmi   = !key[1];
-    wire exti  = !key[2];
 
     wire reset_n, hart_reset_n, rst_n;
+    wire exti = 1'b0;
+
+    tri0 [21:0] pins;
+
+    assign pins[ 1:0] = key[3:2];
+    assign pins[11:2] = sw;
+    assign led        = pins[21:12];
 
     arilla_bus_if #(
         .DataWidth       (`SYSTEM__XLEN),
@@ -34,8 +40,8 @@ module top (
         .ByteSize        (`SYSTEM__BLEN)
     ) bus_interface ();
 
-    assign bus_interface.inhibit   = sw[9];
-    assign bus_interface.intercept = sw[8];
+    assign bus_interface.inhibit   = 1'b0;
+    assign bus_interface.intercept = 1'b0;
 
     dmi_if #(
         .DataWidth   (`SYSTEM__XLEN),
@@ -46,7 +52,7 @@ module top (
 
     por #(
         .Cycles(`SYSTEM__POR_TIME)
-    ) por_inst (
+    ) por (
         .clk  (clk),
         .power(power),
         .rst_n(reset_n)
@@ -61,8 +67,6 @@ module top (
         .debug        (debug_interface),
         .bus_interface(bus_interface)
     );
-
-    assign led[0] = rst_n;
 
     rv_core rv_core (
         .clk            (clk),
@@ -81,6 +85,17 @@ module top (
     ) memory (
         .clk          (clk),
         .rst_n        (rst_n),
+        .bus_interface(bus_interface)
+    );
+
+    gpio #(
+        .BaseAddress(`SYSTEM__GPIO_BASE),
+        .NumIO      (`SYSTEM__GPIO_NUM),
+        .Mask       (`SYSTEM__GPIO_MASK)
+    ) gpio_p (
+        .clk          (clk),
+        .rst_n        (rst_n),
+        .pins         (pins),
         .bus_interface(bus_interface)
     );
 
