@@ -11,6 +11,7 @@ module d_ctl (
 
     input nmi,
     input interrupt,
+    input ebreak,
 
     input [`ISA__XLEN-1:0] pc_reg,
     input [`ISA__XLEN-1:0] pc_next,
@@ -29,8 +30,11 @@ module d_ctl (
     wire ctrl_halted     = ctrl.mcp_addr == `CONTROL_SIGNALS__HALTED;
     wire ctrl_resuming   = ctrl.mcp_addr == `CONTROL_SIGNALS__RESUMING;
     wire instruction_end = (ctrl.write_pc && !ctrl_resuming) || interrupt;
-    wire step            = instruction_end && step_en;
-    wire halt_req        = debug_if.halt_req || step;
+    wire trigger_cause   = 1'b0;
+    wire ebreak_cause    = ebreak && ctrl.write_pc_ne && `CSR__DCSR_EBREAKM(csrs.DCSR_reg);
+    wire halt_cause      = debug_if.halt_req;
+    wire step_cause      = step_en && instruction_end;
+    wire halt_req        = trigger_cause || ebreak_cause || halt_cause || step_cause;
 
     reg debug_reg;
     reg halted_reg;
@@ -62,11 +66,6 @@ module d_ctl (
     assign csrs.DCSR_write = 1'b1;
     assign csrs.DPC_in     = dpc;
     assign csrs.DPC_write  = debug && !debug_reg;
-
-    wire trigger_cause = 1'b0;
-    wire ebreak_cause  = 1'b0;
-    wire halt_cause    = debug_if.halt_req;
-    wire step_cause    = step_en;
 
     always_comb begin
         if(trigger_cause) begin

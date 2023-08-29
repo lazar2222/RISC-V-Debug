@@ -242,6 +242,7 @@ module rv_core (
         .rst_n      (rst_n),
         .nmi        (nmi),
         .interrupt  (interrupt),
+        .ebreak     (ebreak),
         .pc_reg     (pc),
         .pc_next    (next_pc),
         .debug      (debug),

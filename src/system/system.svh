@@ -13,7 +13,7 @@
 
 `define SYSTEM__MEM_BASE 32'h0000_0000
 //`define SYSTEM__MEM_SIZE (64 * 1024)
-`define SYSTEM__MEM_SIZE (16 * 1024)
+`define SYSTEM__MEM_SIZE (32 * 1024)
 `define SYSTEM__MEM_INIT "C:/Users/lazar/Desktop/RISC-V_Debug/src/memory/main.mif"
 `define SYSTEM__MEM_HINT "ENABLE_RUNTIME_MOD=YES,INSTANCE_NAME=MAIN"
 

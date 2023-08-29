@@ -131,11 +131,8 @@ module control (
                     control_signals.rd_sel    = `CONTROL_SIGNALS__RD_CSR;
                     control_signals.write_rd  = 1'b1;
                     control_signals.write_csr = 1'b1;
-                    `CONTROL__NEXT_INST
                 end
-                if (interrupt_pending || debug || step) begin
-                    `CONTROL__NEXT_INST
-                end
+                `CONTROL__NEXT_INST
             end
             `CONTROL_SIGNALS__RESUMING: begin
                 control_signals.write_pc_ex = 1'b1;
@@ -164,14 +161,12 @@ module control (
             `CONTROL_SIGNALS__OP,
             `CONTROL_SIGNALS__MISCMEM,
             `CONTROL_SIGNALS__LOAD_1,
-            `CONTROL_SIGNALS__STORE_1:  mcp_next = control_signals.mem_complete ? `CONTROL_SIGNALS__DISPATCH : `CONTROL_SIGNALS__PROLOGUE;
+            `CONTROL_SIGNALS__STORE_1,
+            `CONTROL_SIGNALS__SYSTEM:   mcp_next = control_signals.mem_complete ? `CONTROL_SIGNALS__DISPATCH : `CONTROL_SIGNALS__PROLOGUE;
             `CONTROL_SIGNALS__LOAD,
             `CONTROL_SIGNALS__LOAD_W:   mcp_next = control_signals.mem_complete ? `CONTROL_SIGNALS__LOAD_1   : `CONTROL_SIGNALS__LOAD_W;
             `CONTROL_SIGNALS__STORE,
             `CONTROL_SIGNALS__STORE_W:  mcp_next = control_signals.mem_complete ? `CONTROL_SIGNALS__STORE_1  : `CONTROL_SIGNALS__STORE_W;
-            `CONTROL_SIGNALS__SYSTEM:   mcp_next = (control_signals.f3 != `ISA__FUNCT3_PRIV || interrupt_pending || debug || step)
-                                            ? (control_signals.mem_complete ? `CONTROL_SIGNALS__DISPATCH : `CONTROL_SIGNALS__PROLOGUE)
-                                            : `CONTROL_SIGNALS__SYSTEM;
             `CONTROL_SIGNALS__HALTED:   mcp_next = debug ? `CONTROL_SIGNALS__HALTED : `CONTROL_SIGNALS__RESUMING;
             `CONTROL_SIGNALS__RESUMING: mcp_next = `CONTROL_SIGNALS__PROLOGUE;
             default:                    mcp_next = mcp_addr + 5'd1;
