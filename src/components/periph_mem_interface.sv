@@ -32,7 +32,7 @@ module periph_mem_interface #(
     output [DataWidth-1:0] data_periph_out;
     output [SizeWords-1:0] data_periph_write;
 
-    wire [DataWidth-1:0] data_periph[SizeWords];
+    wire [DataWidth-1:0] data_periph [SizeWords];
 
     wire [DeviceAddressWidth-1:0] device_address = bus_interface.address[AddressWidth-1:LocalAddressWidth];
     wire [ LocalAddressWidth-1:0] local_address  = bus_interface.address[LocalAddressWidth-1:0];

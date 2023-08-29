@@ -34,6 +34,15 @@ module top (
     assign pins[11:2] = sw;
     assign led        = pins[21:12];
 
+    wire [41:0] hex;
+
+    assign hex0 = hex[ 6: 0];
+    assign hex1 = hex[13: 7];
+    assign hex2 = hex[20:14];
+    assign hex3 = hex[27:21];
+    assign hex4 = hex[34:28];
+    assign hex5 = hex[41:35];
+
     arilla_bus_if #(
         .DataWidth       (`SYSTEM__XLEN),
         .ByteAddressWidth(`SYSTEM__ALEN),
@@ -96,6 +105,16 @@ module top (
         .clk          (clk),
         .rst_n        (rst_n),
         .pins         (pins),
+        .bus_interface(bus_interface)
+    );
+
+    hex #(
+        .BaseAddress(`SYSTEM__HEX_BASE),
+        .NumDigits  (`SYSTEM__HEX_NUM)
+    ) hex_p (
+        .clk          (clk),
+        .rst_n        (rst_n),
+        .dig          (hex),
         .bus_interface(bus_interface)
     );
 
