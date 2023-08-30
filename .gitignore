@@ -1,7 +1,15 @@
 project/db/
 project/incremental_db/
-project/output_files/
+project/output_files/*
 ~$*.xlsx
 *.ver
 *.qws
 c5_pin_model_dump.txt
+.settings/
+.project
+.cproject
+*.launch
+build/
+
+!project/output_files/*.sof
+!project/output_files/*.cdf

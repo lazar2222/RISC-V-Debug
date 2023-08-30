@@ -3,7 +3,9 @@
 `include "../debug/dmi_if.svh"
 `include "../debug/debug_if.svh"
 
-module top (
+module top #(
+    parameter int PLL = 1
+) (
     input clock_50,
 
     input [3:0] key,
@@ -21,9 +23,21 @@ module top (
 
     inout [35:0] gpio
 );
-    wire clk   = clock_50;
+    wire clk;
     wire power = key[0];
     wire nmi   = !key[1];
+
+    generate
+        if (PLL == 1) begin : g_pll
+            pll pll (
+            .refclk  (clock_50),
+            .rst     (!power && nmi),
+            .outclk_0(clk)
+            );
+        end else begin : g_nopll
+            assign clk = clock_50;
+        end
+    endgenerate
 
     wire reset_n, hart_reset_n, rst_n;
     wire exti = 1'b0;

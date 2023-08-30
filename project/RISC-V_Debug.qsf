@@ -239,6 +239,8 @@ set_location_assignment PIN_AA12 -to gpio[35]
 
 set_global_assignment -name SEARCH_PATH ../src/components
 set_global_assignment -name SDC_FILE "RISC-V_Debug.SDC"
+set_global_assignment -name QIP_FILE ../src/pll/pll.qip
+set_global_assignment -name SIP_FILE ../src/pll/pll.sip
 set_global_assignment -name SYSTEMVERILOG_FILE ../src/system/top.sv
 set_global_assignment -name SYSTEMVERILOG_FILE ../src/memory/memory.sv
 set_global_assignment -name SYSTEMVERILOG_FILE ../src/debug/dm.sv
@@ -255,4 +257,9 @@ set_global_assignment -name SYSTEMVERILOG_FILE ../src/core/d_ctl.sv
 set_global_assignment -name SYSTEMVERILOG_FILE ../src/peripherals/gpio.sv
 set_global_assignment -name SYSTEMVERILOG_FILE ../src/peripherals/hex.sv
 set_global_assignment -name SYSTEMVERILOG_FILE ../src/components/periph_mem_interface.sv
+
+set_global_assignment -name ENABLE_SIGNALTAP OFF
+set_global_assignment -name USE_SIGNALTAP_FILE stp1.stp
+set_global_assignment -name SIGNALTAP_FILE stp1.stp
+
 set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top

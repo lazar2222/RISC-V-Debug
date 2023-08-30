@@ -24,7 +24,7 @@ module csr #(
 
     output tri0 [`ISA__XLEN-1:0] csr_out,
     output                       invalid,
-    output tri0                  conflict,
+    output wor                   conflict,
     output                       timeint
 );
     wire [`CSR__ALEN-1:0] address     = addr[`CSR__ALEN-1:0];
@@ -48,6 +48,7 @@ module csr #(
     `CSRGEN__FOREACH_MRW(CSRGEN__GENERATE_READ_ASSIGN)
     `CSRGEN__FOREACH_DEBUG(CSRGEN__GENERATE_READ_ASSIGN)
 
+    assign conflict = 1'b0;
     `CSRGEN__GENERATE_CONFLICT(MSTATUS)
     `CSRGEN__GENERATE_CONFLICT(MCAUSE)
     `CSRGEN__GENERATE_CONFLICT(MTVAL)

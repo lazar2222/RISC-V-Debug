@@ -4,6 +4,9 @@
 `include "control_signals_if.svh"
 
 module int_ctl (
+    input clk,
+    input rst_n,
+
     control_signals_if ctrl,
     csr_if             csrs,
 
@@ -37,7 +40,7 @@ module int_ctl (
     output                  interrupt,
     output                  interrupt_pending
 );
-    wire debug      = dbg && ctrl.mcp_addr != `CONTROL_SIGNALS__RESUMING;
+    wire debug      = dbg;
     wire breakpoint = breakp && !debug;
 
     wire instruction_start = ctrl.write_ir;
@@ -79,6 +82,8 @@ module int_ctl (
     assign `CSR__MI_MTI(csrs.MIP_in) = timer;
     assign csrs.MIP_write            = 1'b1;
 
+    reg inside_nmi;
+
     wire interrupt_enabled = `CSR__MSTATUS_MIE(csrs.MSTATUS_reg);
     wire exti_enabled      = `CSR__MI_MEI(csrs.MIE_reg);
     wire timer_enabled     = `CSR__MI_MTI(csrs.MIE_reg);
@@ -90,7 +95,7 @@ module int_ctl (
     assign interrupt = !conflict && !debug
         && !(step && !`CSR__DCSR_STEPIE(csrs.DCSR_reg))
         && interruptible
-        && (nmi || (interrupt_pending && interrupt_enabled));
+        && ((nmi && !inside_nmi) || (interrupt_pending && interrupt_enabled));
 
     wire ret     = mret && !exception;
     wire trap    = exception || interrupt || ret;
@@ -100,6 +105,19 @@ module int_ctl (
     assign `CSR__MSTATUS_MPIE(csrs.MSTATUS_in) = ret ? 1'b1 :`CSR__MSTATUS_MIE(csrs.MSTATUS_reg);
     assign `CSR__MSTATUS_MIE(csrs.MSTATUS_in)  = ret ? `CSR__MSTATUS_MPIE(csrs.MSTATUS_reg) : 1'b0;
     assign csrs.MSTATUS_write = trap && !debug;
+
+    always @(posedge clk) begin
+        if (!rst_n) begin
+            inside_nmi <= 1'b0;
+        end else begin
+            if ((interrupt && nmi) && !debug) begin
+                inside_nmi <= 1'b1;
+            end
+            if ((inside_nmi && ret) && !debug) begin
+                inside_nmi <= 1'b0;
+            end
+        end
+    end
 
     reg [`ISA__XLEN-1:0] mcause;
     reg [`ISA__XLEN-1:0] mtval;
@@ -112,7 +130,7 @@ module int_ctl (
             mcause = `CSR__MCAUSE_EXTI;
             mtval  = `ISA__ZERO;
         end else if (timer_interrupt) begin
-            mcause = `CSR__MCAUSE_NMI;
+            mcause = `CSR__MCAUSE_TIMER;
             mtval  = `ISA__ZERO;
         end else if (inst_breakpoint) begin
             mcause = `CSR__MCAUSE_BREAKPOINT;

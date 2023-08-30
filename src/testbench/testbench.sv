@@ -39,7 +39,9 @@ module testbench ();
 
     wire [35:0] gpio = 36'd0;
 
-    top top (
+    top #(
+        .PLL(0)
+    ) top (
         .clock_50(clk),
         .key     (key),
         .sw      (sw),

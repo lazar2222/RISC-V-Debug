@@ -230,6 +230,6 @@ end else if (csr_interface.``csr``_write) begin                                 
 end                                                                                                                \
 
 `define CSRGEN__GENERATE_CONFLICT(csr) \
-assign conflict = (address == `CSR__``csr`` && write_reg && `CSR__``csr``_MASK != `ISA__ZERO) ? 1'b1 : 1'bz; \
+assign conflict = (address == `CSR__``csr`` && write_reg && `CSR__``csr``_MASK != `ISA__ZERO); \
 
 `endif  //CSR__SVH

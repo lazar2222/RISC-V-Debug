@@ -210,12 +210,14 @@ module rv_core (
     );
 
     int_ctl int_ctl (
+        .clk              (clk),
+        .rst_n            (rst_n),
         .ctrl             (control_signals),
         .csrs             (csr_interface),
         .nmi              (nmi),
         .exti             (exti),
         .timer            (timer),
-        .dbg              (debug),
+        .dbg              (halted),
         .step             (step),
         .breakp           (1'b0),
         .fault            (fault),
