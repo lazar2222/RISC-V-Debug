@@ -7,7 +7,8 @@ module hex #(
     clk,
     rst_n,
     dig,
-    bus_interface
+    bus_interface,
+    hit
 );
     localparam int DataWidth   = $bits(bus_interface.data_ctp);
     localparam int NumBits     = NumDigits * 8;
@@ -27,6 +28,8 @@ module hex #(
     output [(7*NumDigits)-1:0] dig;
 
     arilla_bus_if bus_interface;
+
+    output hit;
 
     reg  [              DataWidth-1:0] mode;
     reg  [(MinNumWords*DataWidth)-1:0] data;
@@ -74,6 +77,7 @@ module hex #(
         .clk              (clk),
         .rst_n            (rst_n),
         .bus_interface    (bus_interface),
+        .hit              (hit),
         .data_periph_in   (memory),
         .data_periph_out  (data_out),
         .data_periph_write(data_write)

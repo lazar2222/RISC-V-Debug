@@ -9,7 +9,8 @@ module memory #(
     input clk,
     input rst_n,
 
-    arilla_bus_if bus_interface
+    arilla_bus_if bus_interface,
+    output        hit
 );
     localparam int DataWidth             = $bits(bus_interface.data_ctp);
     localparam int AddressWidth          = $bits(bus_interface.address);
@@ -29,11 +30,10 @@ module memory #(
     wire [         DataWidth-1:0] data_out;
 
     reg  read_hit;
-    wire hit         = device_address == DeviceAddress;
+    assign hit       = device_address == DeviceAddress;
     wire write_hit   = hit && bus_interface.write;
     wire data_enable = read_hit && !bus_interface.intercept;
 
-    assign bus_interface.hit      = hit         ? 1'b1     : 1'bz;
     assign bus_interface.data_ptc = data_enable ? data_out : {DataWidth{1'bz}};
 
     always @(posedge clk) begin

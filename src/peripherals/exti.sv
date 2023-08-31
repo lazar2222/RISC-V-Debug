@@ -8,7 +8,8 @@ module exti #(
     rst_n,
     pins,
     intr,
-    bus_interface
+    bus_interface,
+    hit
 );
     localparam int DataWidth   = $bits(bus_interface.data_ctp);
     localparam int MinNumWords = (NumIO + DataWidth - 1) / DataWidth;
@@ -23,6 +24,8 @@ module exti #(
     output intr;
 
     arilla_bus_if bus_interface;
+
+    output hit;
 
     reg  [NumIO-1:0] in1_reg, in2_reg;
     wire [NumIO-1:0] rising, falling;
@@ -127,6 +130,7 @@ module exti #(
         .clk              (clk),
         .rst_n            (rst_n),
         .bus_interface    (bus_interface),
+        .hit              (hit),
         .data_periph_in   (memory),
         .data_periph_out  (data_out),
         .data_periph_write(data_write)

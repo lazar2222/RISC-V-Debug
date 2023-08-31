@@ -204,20 +204,20 @@
 
 `define CSRGEN__GENERATE_INTERFACE(csr) \
 reg  [`ISA__XLEN-1:0] ``csr``_reg;   \
-tri0 [`ISA__XLEN-1:0] ``csr``_in;    \
-tri0                  ``csr``_write; \
+wire [`ISA__XLEN-1:0] ``csr``_in;    \
+wire                  ``csr``_write; \
 
 `define CSRGEN__GENERATE_READ_ASSIGN(csr) \
 assign csr_out = address == `CSR__``csr`` ? csr_interface.``csr``_reg : {`ISA__XLEN{1'bz}}; \
-assign hit     = address == `CSR__``csr`` ? 1'b1 : 1'bz;                                    \
+assign hit     = address == `CSR__``csr``;                                    \
 
 `define CSRGEN__GENERATE_READ_ASSIGN_MRO(csr) \
 assign csr_out = address == `CSR__``csr`` ? `CSR__``csr``_VALUE : {`ISA__XLEN{1'bz}}; \
-assign hit     = address == `CSR__``csr`` ? 1'b1 : 1'bz;                              \
+assign hit     = address == `CSR__``csr``;                              \
 
 `define CSRGEN__GENERATE_ARRAY_READ_ASSIGN_MRO(csr, i) \
 assign csr_out = address == `CSR__``csr``(i) ? `CSR__``csr``_VALUE : {`ISA__XLEN{1'bz}}; \
-assign hit     = address == `CSR__``csr``(i) ? 1'b1 : 1'bz;                              \
+assign hit     = address == `CSR__``csr``(i);                              \
 
 `define CSRGEN__GENERATE_INITIAL_VALUE(csr) \
 csr_interface.``csr``_reg <= `CSR__``csr``_VALUE; \

@@ -8,7 +8,8 @@ module gpio #(
     clk,
     rst_n,
     pins,
-    bus_interface
+    bus_interface,
+    hit
 );
     localparam int DataWidth   = $bits(bus_interface.data_ctp);
     localparam int MinNumWords = (NumIO + DataWidth - 1) / DataWidth;
@@ -21,6 +22,8 @@ module gpio #(
     inout [NumIO-1:0] pins;
 
     arilla_bus_if bus_interface;
+
+    output hit;
 
     reg  [NumIO-1:0] dir;
     reg  [NumIO-1:0] out;
@@ -86,6 +89,7 @@ module gpio #(
         .clk              (clk),
         .rst_n            (rst_n),
         .bus_interface    (bus_interface),
+        .hit              (hit),
         .data_periph_in   (memory),
         .data_periph_out  (data_out),
         .data_periph_write(data_write)

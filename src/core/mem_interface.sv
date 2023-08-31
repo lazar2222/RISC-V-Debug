@@ -8,6 +8,7 @@ module mem_interface (
     sign_size,
     rd,
     wr,
+    secondary_hit,
     data_in,
     data_out,
     complete,
@@ -32,6 +33,7 @@ module mem_interface (
     input [          SizeSize:0] sign_size;
     input                        rd;
     input                        wr;
+    input                        secondary_hit;
 
     input  [DataWidth-1:0] data_in;
     output [DataWidth-1:0] data_out;
@@ -40,6 +42,8 @@ module mem_interface (
     output reg                        malign;
     output reg                        fault;
     output reg [ByteAddressWidth-1:0] address_reg;
+
+    wire hit = bus_interface.hit || secondary_hit;
 
     reg [SizeSize-1:0] size_reg;
     reg                sign_reg;
@@ -69,7 +73,7 @@ module mem_interface (
             size_reg    <= size;
             sign_reg    <= sign;
             malign      <= malign_w;
-            fault       <= !bus_interface.hit;
+            fault       <= !hit;
         end
     end
 
@@ -85,7 +89,7 @@ module mem_interface (
         end
     endgenerate
 
-    wire valid = !malign_w && bus_interface.hit;
+    wire valid = !malign_w && hit;
 
     assign bus_interface.data_ctp    = !bus_interface.inhibit ? shift_data_in : {DataWidth{1'bz}};
     assign bus_interface.address     = !bus_interface.inhibit ? address[ByteAddressWidth-1:MaxSize] : {WordAddressWidth{1'bz}};

@@ -5,10 +5,10 @@ interface dmi_if #(
     parameter int DataWidth,
     parameter int AddressWidth
 );
-    tri0 [   DataWidth-1:0] data;
-    tri0 [AddressWidth-1:0] address;
-    tri0                    read;
-    tri0                    write;
+    wire [   DataWidth-1:0] data;
+    wire [AddressWidth-1:0] address;
+    wire                    read;
+    wire                    write;
 
 endinterface
 

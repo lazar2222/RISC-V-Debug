@@ -42,7 +42,7 @@ module top #(
     wire reset_n, hart_reset_n, rst_n;
     wire exti;
 
-    tri0 [21:0] pins;
+    wire [21:0] pins;
     wire [11:0] intr;
 
     assign pins[ 1:0] = key[3:2];
@@ -66,6 +66,9 @@ module top #(
         .ByteSize        (`SYSTEM__BLEN)
     ) bus_interface ();
 
+    wire hit_mem, hit_gpio, hit_hex, hit_exti;
+
+    assign bus_interface.hit       = hit_mem || hit_gpio || hit_hex || hit_exti;
     assign bus_interface.inhibit   = 1'b0;
     assign bus_interface.intercept = 1'b0;
 
@@ -111,7 +114,8 @@ module top #(
     ) memory (
         .clk          (clk),
         .rst_n        (rst_n),
-        .bus_interface(bus_interface)
+        .bus_interface(bus_interface),
+        .hit          (hit_mem)
     );
 
     gpio #(
@@ -122,7 +126,8 @@ module top #(
         .clk          (clk),
         .rst_n        (rst_n),
         .pins         (pins),
-        .bus_interface(bus_interface)
+        .bus_interface(bus_interface),
+        .hit          (hit_gpio)
     );
 
     hex #(
@@ -132,7 +137,8 @@ module top #(
         .clk          (clk),
         .rst_n        (rst_n),
         .dig          (hex),
-        .bus_interface(bus_interface)
+        .bus_interface(bus_interface),
+        .hit          (hit_hex)
     );
 
     exti #(
@@ -143,7 +149,8 @@ module top #(
         .rst_n        (rst_n),
         .pins         (intr),
         .intr         (exti),
-        .bus_interface(bus_interface)
+        .bus_interface(bus_interface),
+        .hit          (hit_exti)
     );
 
 endmodule

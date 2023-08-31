@@ -10,6 +10,7 @@ module csr #(
 
     csr_if        csr_interface,
     arilla_bus_if bus_interface,
+    output        mem_hit,
 
     input [ `ISA__XLEN-1:0] reg_in,
     input [ `ISA__XLEN-1:0] imm_in,
@@ -22,10 +23,10 @@ module csr #(
     input debug,
     input retire,
 
-    output tri0 [`ISA__XLEN-1:0] csr_out,
-    output                       invalid,
-    output wor                   conflict,
-    output                       timeint
+    output     [`ISA__XLEN-1:0] csr_out,
+    output                      invalid,
+    output wor                  conflict,
+    output                      timeint
 );
     wire [`CSR__ALEN-1:0] address     = addr[`CSR__ALEN-1:0];
     wire [`ISA__XLEN-1:0] mask        = f3[2] ? imm_in : reg_in;
@@ -33,7 +34,7 @@ module csr #(
     wire [`ISA__XLEN-1:0] clear_value = (~mask) & csr_out;
     wire [`ISA__XLEN-1:0] value       = f3[1] ? (f3[0] ? clear_value : set_value ) : mask;
 
-    tri0 hit;
+    wor hit;
     wire rs_zero   = rs     == {`ISA__RFLEN{1'b0}};
     wire imm_zero  = imm_in == { `ISA__XLEN{1'b0}};
     wire write_csr = !(f3[1] && (f3[2] ? imm_zero : rs_zero));
@@ -42,6 +43,7 @@ module csr #(
 
     wire write_reg = write && write_csr && !invalid;
 
+    assign hit = 1'b0;
     `CSRGEN__FOREACH_MCOUNTER(CSRGEN__GENERATE_READ_ASSIGN)
     `CSRGEN__FOREACH_MHPMCOUNTER(CSRGEN__GENERATE_ARRAY_READ_ASSIGN_MRO)
     `CSRGEN__FOREACH_MRO(CSRGEN__GENERATE_READ_ASSIGN_MRO)
@@ -112,6 +114,7 @@ module csr #(
         .clk              (clk),
         .rst_n            (rst_n),
         .bus_interface    (bus_interface),
+        .hit              (mem_hit),
         .data_periph_in   (memory),
         .data_periph_out  (data_periph_out),
         .data_periph_write(data_periph_write)

@@ -21,7 +21,7 @@ void nmi_handler(void)
 
 void exception_handler(void)
 {
-
+	GPIO->DOR = 1023 << 12;
 }
 
 void timer_handler(void)
