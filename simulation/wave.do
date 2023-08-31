@@ -43,6 +43,9 @@ add wave -noupdate -expand -group {csr_interface} /testbench/top/rv_core/csr_int
 add wave -noupdate -expand -group {csr} /testbench/top/rv_core/csr/*
 add wave -noupdate -expand -group {int_ctl} /testbench/top/rv_core/int_ctl/*
 add wave -noupdate -expand -group {memory} /testbench/top/memory/*
+add wave -noupdate -expand -group {gpio_p} /testbench/top/gpio_p/*
+add wave -noupdate -expand -group {hex_p} /testbench/top/hex_p/*
+add wave -noupdate -expand -group {exti_p} /testbench/top/exti_p/*
 TreeUpdate [SetDefaultTree]
 WaveRestoreCursors {{Cursor 1} {0 ps} 0}
 quietly wave cursor active 1

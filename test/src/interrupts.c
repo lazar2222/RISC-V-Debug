@@ -3,6 +3,7 @@
 #include "tim.h"
 #include "gpio.h"
 #include "hex.h"
+#include "exti.h"
 
 void nmi_handler(void) __attribute__ ((interrupt ("machine")) );
 void exception_handler(void) __attribute__ ((interrupt ("machine")) );
@@ -31,5 +32,6 @@ void timer_handler(void)
 
 void exti_handler(void)
 {
-    exti_flag = 1;
+    exti_flag = EXTI->IPR;
+    EXTI->IPR = EXTI->IPR;
 }

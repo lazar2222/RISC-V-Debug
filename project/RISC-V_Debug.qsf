@@ -256,6 +256,7 @@ set_global_assignment -name SYSTEMVERILOG_FILE ../src/core/int_ctl.sv
 set_global_assignment -name SYSTEMVERILOG_FILE ../src/core/d_ctl.sv
 set_global_assignment -name SYSTEMVERILOG_FILE ../src/peripherals/gpio.sv
 set_global_assignment -name SYSTEMVERILOG_FILE ../src/peripherals/hex.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../src/peripherals/exti.sv
 set_global_assignment -name SYSTEMVERILOG_FILE ../src/components/periph_mem_interface.sv
 
 set_global_assignment -name ENABLE_SIGNALTAP OFF

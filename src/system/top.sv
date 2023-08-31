@@ -40,13 +40,16 @@ module top #(
     endgenerate
 
     wire reset_n, hart_reset_n, rst_n;
-    wire exti = 1'b0;
+    wire exti;
 
     tri0 [21:0] pins;
+    wire [11:0] intr;
 
     assign pins[ 1:0] = key[3:2];
     assign pins[11:2] = sw;
     assign led        = pins[21:12];
+    assign intr[ 1:0] = key[3:2];
+    assign intr[11:2] = sw;
 
     wire [41:0] hex;
 
@@ -129,6 +132,17 @@ module top #(
         .clk          (clk),
         .rst_n        (rst_n),
         .dig          (hex),
+        .bus_interface(bus_interface)
+    );
+
+    exti #(
+        .BaseAddress(`SYSTEM__EXTI_BASE),
+        .NumIO      (`SYSTEM__EXTI_NUM)
+    ) exti_p (
+        .clk          (clk),
+        .rst_n        (rst_n),
+        .pins         (intr),
+        .intr         (exti),
         .bus_interface(bus_interface)
     );
 

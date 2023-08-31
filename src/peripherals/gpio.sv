@@ -30,7 +30,7 @@ module gpio #(
     wire [(MinNumWords*DataWidth)-1:0] out_mem;
     wire [(MinNumWords*DataWidth)-1:0] in_mem;
     wire [              DataWidth-1:0] null_word = {DataWidth{1'b0}};
-    wire [   (NumWords*DataWidth)-1:0] memory    = {dir_mem,out_mem,in_mem,{FillWords{null_word}}};
+    wire [   (NumWords*DataWidth)-1:0] memory    = {{FillWords{null_word}},in_mem,out_mem,dir_mem};
 
     wire [DataWidth-1:0] data_out;
     wire [ NumWords-1:0] data_write;

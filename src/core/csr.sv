@@ -85,7 +85,7 @@ module csr #(
     reg [(2*`ISA__XLEN)-1:0] mtime;
     reg [(2*`ISA__XLEN)-1:0] mtimecmp;
 
-    wire [(4*`ISA__XLEN)-1:0] memory = {mtime,mtimecmp};
+    wire [(4*`ISA__XLEN)-1:0] memory = {mtimecmp,mtime};
     wire [    `ISA__XLEN-1:0] data_periph_out;
     wire [               3:0] data_periph_write;
 

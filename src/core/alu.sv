@@ -22,8 +22,8 @@ module alu #(
     always_comb begin
         case (op)
             `ISA__FUNCT3_ADD:  c = mod ? a - b : a + b;
-            `ISA__FUNCT3_SLT:  c = sign_a < sign_b ? ZERO : ONE;
-            `ISA__FUNCT3_SLTU: c = a < b ? ZERO : ONE;
+            `ISA__FUNCT3_SLT:  c = sign_a < sign_b ? ONE : ZERO;
+            `ISA__FUNCT3_SLTU: c = a < b ? ONE : ZERO;
             `ISA__FUNCT3_XOR:  c = a ^ b;
             `ISA__FUNCT3_OR:   c = a | b;
             `ISA__FUNCT3_AND:  c = a & b;

@@ -31,7 +31,7 @@ module hex #(
     reg  [              DataWidth-1:0] mode;
     reg  [(MinNumWords*DataWidth)-1:0] data;
     wire [              DataWidth-1:0] null_word = {DataWidth{1'b0}};
-    wire [   (NumWords*DataWidth)-1:0] memory    = {mode,data,{FillWords{null_word}}};
+    wire [   (NumWords*DataWidth)-1:0] memory    = {{FillWords{null_word}},data,mode};
 
     wire [6:0] digits     [NumDigits];
     wire [6:0] man_digits [NumDigits];
