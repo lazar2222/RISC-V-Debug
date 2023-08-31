@@ -7,8 +7,13 @@ module dm (
     input clk,
     input rst_n,
 
+    input  n_trst,
+    input  n_rst,
+
+    output vt_ref,
     output reset_n,
     output hart_reset_n,
+    output dtm_reset_n,
 
     dmi_if        dmi,
     debug_if      debug,
@@ -35,11 +40,14 @@ module dm (
     wire resumereq    = dmi.address == `DEBUG__DMCONTROL && dmi.write && `DEBUG__DMCONTROL_RESUMEREQ(dmi.data) && !`DEBUG__DMCONTROL_HALTREQ(dmi.data);
     wire ackhavereset = dmi.address == `DEBUG__DMCONTROL && dmi.write && `DEBUG__DMCONTROL_ACKHAVERESET(dmi.data);
 
-    wire system_reset = !rst_n       || ndmreset;
+    wire system_reset = !rst_n       || ndmreset || !n_rst;
     wire hart_reset   = system_reset || hartreset;
+    wire dtm_reset    = !rst_n       || !n_trst;
 
+    assign vt_ref       = rst_n;
     assign reset_n      = !system_reset;
     assign hart_reset_n = !hart_reset;
+    assign dtm_reset_n  = !dtm_reset;
 
     wire available = !hart_reset;
     wire running   = available && !debug.halted;

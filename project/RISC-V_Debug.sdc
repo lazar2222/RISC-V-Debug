@@ -13,3 +13,12 @@ set_false_path -from [get_ports {key*}] -to *
 set_false_path -from [get_ports {sw*} ] -to *
 set_false_path -from * -to [get_ports {led*}]
 set_false_path -from * -to [get_ports {hex*}]
+
+set_false_path -from [get_ports {tck}] -to *
+set_false_path -from [get_ports {tms} ] -to *
+set_false_path -from [get_ports {tdi}] -to *
+set_false_path -from * -to [get_ports {tdo}]
+
+set_false_path -from [get_ports {n_trst} ] -to *
+set_false_path -from [get_ports {n_rst} ] -to *
+set_false_path -from * -to [get_ports {vt_ref}]

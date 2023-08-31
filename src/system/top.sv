@@ -45,7 +45,7 @@ module top #(
         end
     endgenerate
 
-    wire reset_n, hart_reset_n, rst_n;
+    wire reset_n, hart_reset_n, rst_n, dtm_reset_n;
     wire exti;
 
     wire [21:0] pins;
@@ -96,8 +96,12 @@ module top #(
     dm dm (
         .clk          (clk),
         .rst_n        (reset_n),
+        .n_trst       (n_trst),
+        .n_rst        (n_rst),
+        .vt_ref       (vt_ref),
         .reset_n      (rst_n),
         .hart_reset_n (hart_reset_n),
+        .dtm_reset_n  (dtm_reset_n),
         .dmi          (dmi_interface),
         .debug        (debug_interface),
         .bus_interface(bus_interface)
