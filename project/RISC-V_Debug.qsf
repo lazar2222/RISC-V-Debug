@@ -15,6 +15,8 @@ set_global_assignment -name FLOW_ENABLE_RTL_VIEWER ON
 set_global_assignment -name FAMILY "Cyclone V"
 set_global_assignment -name DEVICE 5CSXFC6D6F31C6
 
+set_global_assignment -name RESERVE_ALL_UNUSED_PINS_WEAK_PULLUP "AS OUTPUT DRIVING GROUND"
+
 set_global_assignment -name MIN_CORE_JUNCTION_TEMP 0
 set_global_assignment -name MAX_CORE_JUNCTION_TEMP 85
 set_global_assignment -name POWER_PRESET_COOLING_SOLUTION "NO HEAT SINK WITH STILL AIR"
@@ -164,78 +166,23 @@ set_location_assignment PIN_AE19 -to hex5[4]
 set_location_assignment PIN_AF19 -to hex5[5]
 set_location_assignment PIN_AB21 -to hex5[6]
 
-set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to gpio[0]
-set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to gpio[1]
-set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to gpio[2]
-set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to gpio[3]
-set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to gpio[4]
-set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to gpio[5]
-set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to gpio[6]
-set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to gpio[7]
-set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to gpio[8]
-set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to gpio[9]
-set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to gpio[10]
-set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to gpio[11]
-set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to gpio[12]
-set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to gpio[13]
-set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to gpio[14]
-set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to gpio[15]
-set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to gpio[16]
-set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to gpio[17]
-set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to gpio[18]
-set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to gpio[19]
-set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to gpio[20]
-set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to gpio[21]
-set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to gpio[22]
-set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to gpio[23]
-set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to gpio[24]
-set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to gpio[25]
-set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to gpio[26]
-set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to gpio[27]
-set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to gpio[28]
-set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to gpio[29]
-set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to gpio[30]
-set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to gpio[31]
-set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to gpio[32]
-set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to gpio[33]
-set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to gpio[34]
-set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to gpio[35]
-set_location_assignment PIN_W15  -to gpio[0]
-set_location_assignment PIN_AK2  -to gpio[1]
-set_location_assignment PIN_Y16  -to gpio[2]
-set_location_assignment PIN_AK3  -to gpio[3]
-set_location_assignment PIN_AJ1  -to gpio[4]
-set_location_assignment PIN_AJ2  -to gpio[5]
-set_location_assignment PIN_AH2  -to gpio[6]
-set_location_assignment PIN_AH3  -to gpio[7]
-set_location_assignment PIN_AH4  -to gpio[8]
-set_location_assignment PIN_AH5  -to gpio[9]
-set_location_assignment PIN_AG1  -to gpio[10]
-set_location_assignment PIN_AG2  -to gpio[11]
-set_location_assignment PIN_AG3  -to gpio[12]
-set_location_assignment PIN_AG5  -to gpio[13]
-set_location_assignment PIN_AG6  -to gpio[14]
-set_location_assignment PIN_AG7  -to gpio[15]
-set_location_assignment PIN_AG8  -to gpio[16]
-set_location_assignment PIN_AF4  -to gpio[17]
-set_location_assignment PIN_AF5  -to gpio[18]
-set_location_assignment PIN_AF6  -to gpio[19]
-set_location_assignment PIN_AF8  -to gpio[20]
-set_location_assignment PIN_AF9  -to gpio[21]
-set_location_assignment PIN_AF10 -to gpio[22]
-set_location_assignment PIN_AE7  -to gpio[23]
-set_location_assignment PIN_AE9  -to gpio[24]
-set_location_assignment PIN_AE11 -to gpio[25]
-set_location_assignment PIN_AE12 -to gpio[26]
-set_location_assignment PIN_AD7  -to gpio[27]
-set_location_assignment PIN_AD9  -to gpio[28]
-set_location_assignment PIN_AD10 -to gpio[29]
-set_location_assignment PIN_AD11 -to gpio[30]
-set_location_assignment PIN_AD12 -to gpio[31]
-set_location_assignment PIN_AC9  -to gpio[32]
-set_location_assignment PIN_AC12 -to gpio[33]
-set_location_assignment PIN_AB12 -to gpio[34]
-set_location_assignment PIN_AA12 -to gpio[35]
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to tck
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to tms
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to vt_ref
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to n_trst
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to n_rst
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to tdi
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to tdo
+set_instance_assignment -name WEAK_PULL_UP_RESISTOR ON -to tck
+set_instance_assignment -name WEAK_PULL_UP_RESISTOR ON -to n_trst
+set_instance_assignment -name WEAK_PULL_UP_RESISTOR ON -to n_rst
+set_location_assignment PIN_AJ2 -to tck
+set_location_assignment PIN_AH3 -to tms
+set_location_assignment PIN_AH5 -to vt_ref
+set_location_assignment PIN_AG2 -to n_trst
+set_location_assignment PIN_AF4 -to n_rst
+set_location_assignment PIN_AF6 -to tdi
+set_location_assignment PIN_AF9 -to tdo
 
 set_global_assignment -name SEARCH_PATH ../src/components
 set_global_assignment -name SDC_FILE "RISC-V_Debug.SDC"

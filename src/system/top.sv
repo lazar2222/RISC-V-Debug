@@ -21,7 +21,13 @@ module top #(
     output [6:0] hex4,
     output [6:0] hex5,
 
-    inout [35:0] gpio
+    input  tck,
+    input  tms,
+    input  tdi,
+    output tdo,
+    input  n_trst,
+    input  n_rst,
+    output vt_ref
 );
     wire clk;
     wire power = key[0];

@@ -37,7 +37,13 @@ module testbench ();
     wire [6:0] hex4;
     wire [6:0] hex5;
 
-    wire [35:0] gpio = 36'd0;
+    wire tck = 1'b0;
+    wire tms = 1'b0;
+    wire tdi = 1'b0;
+    wire tdo;
+    wire n_trst = 1'b1;
+    wire n_rst  = 1'b1;
+    wire vt_ref;
 
     top #(
         .PLL(0)
@@ -52,7 +58,13 @@ module testbench ();
         .hex3    (hex3),
         .hex4    (hex4),
         .hex5    (hex5),
-        .gpio    (gpio)
+        .tck     (tck),
+        .tms     (tms),
+        .tdi     (tdi),
+        .tdo     (tdo),
+        .n_trst  (n_trst),
+        .n_rst   (n_rst),
+        .vt_ref  (vt_ref)
     );
 
 endmodule
