@@ -93,6 +93,16 @@ module top #(
         .rst_n(reset_n)
     );
 
+    dtm dtm_inst (
+        .clk   (clk),
+        .rst_n (dtm_reset_n),
+        .tck_ns(tck),
+        .tms_ns(tms),
+        .tdi_ns(tdi),
+        .tdo   (tdo),
+        .dmi   (dmi_interface)
+    );
+
     dm dm (
         .clk          (clk),
         .rst_n        (reset_n),

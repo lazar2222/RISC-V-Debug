@@ -56,8 +56,13 @@ module dm (
     wire [31:0] dmstatus   = {9'd0,1'b1,2'd0,havereset,havereset,resumeack,resumeack,2'd0,!available,!available,running,running,halted,halted,2'b10,2'b10,4'h2};
     wire [31:0] dmcontrol  = {2'd0,hartreset,27'd0,ndmreset,dmactive};
 
-    assign dmi.data = (dmi.address == `DEBUG__DMSTATUS  && dmi.read) ? dmstatus  : {32{1'bz}};
-    assign dmi.data = (dmi.address == `DEBUG__DMCONTROL && dmi.read) ? dmcontrol : {32{1'bz}};
+    wor [31:0] data;
+
+    assign data = 32'd0;
+    assign data = dmi.address == `DEBUG__DMSTATUS  ? dmstatus  : {32{1'b0}};
+    assign data = dmi.address == `DEBUG__DMCONTROL ? dmcontrol : {32{1'b0}};
+
+    assign dmi.data = dmi.read ? data : {32{1'bz}};
 
     assign debug.halt_req   = haltreq || (resethaltreq && hart_reset_tail);
     assign debug.resume_req = resumereq;
