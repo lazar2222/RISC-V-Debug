@@ -34,4 +34,6 @@
 
 `define SYSTEM__DMI_ALEN 7
 
+`define SYSTEM__DM_BASE 12'hF80
+
 `endif  //SYSTEM__SVH

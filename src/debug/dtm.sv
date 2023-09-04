@@ -108,7 +108,7 @@ module dtm (
                 state_reg <= state_next;
                 case (state_reg)
                     CAPTURE_DR: begin sr <= sr_next;                              sr_len <= sr_len_next; end
-                    CAPTURE_IR: begin sr <= {IDCODE_VALUE,{SR_LEN-IR_LEN{1'b0}}}; sr_len <= IR_LEN;      end
+                    CAPTURE_IR: begin sr <= {IDCODE,{SR_LEN-IR_LEN{1'b0}}}; sr_len <= IR_LEN;      end
                     SHIFT_DR,
                     SHIFT_IR:   sr <= {tdi,sr[SR_LEN-1:1]};
                     default: ;

@@ -72,9 +72,9 @@ module top #(
         .ByteSize        (`SYSTEM__BLEN)
     ) bus_interface ();
 
-    wire hit_mem, hit_gpio, hit_hex, hit_exti;
+    wire hit_mem, hit_gpio, hit_hex, hit_exti, hit_dm;
 
-    assign bus_interface.hit       = hit_mem || hit_gpio || hit_hex || hit_exti;
+    assign bus_interface.hit       = hit_mem || hit_gpio || hit_hex || hit_exti || hit_dm;
     assign bus_interface.inhibit   = 1'b0;
     assign bus_interface.intercept = 1'b0;
 
@@ -103,7 +103,9 @@ module top #(
         .dmi   (dmi_interface)
     );
 
-    dm dm (
+    dm #(
+        .BaseAddress(`SYSTEM__DM_BASE)
+    ) dm (
         .clk          (clk),
         .rst_n        (reset_n),
         .n_trst       (n_trst),
@@ -114,7 +116,8 @@ module top #(
         .dtm_reset_n  (dtm_reset_n),
         .dmi          (dmi_interface),
         .debug        (debug_interface),
-        .bus_interface(bus_interface)
+        .bus_interface(bus_interface),
+        .mem_hit      (hit_dm)
     );
 
     rv_core rv_core (
