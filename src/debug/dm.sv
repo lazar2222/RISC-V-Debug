@@ -121,28 +121,30 @@ module dm #(
     `DEBUGGEN__FOREACH_SIMPLE(DEBUGGEN__GENERATE_BUSY_ERROR)
     );
 
-    wire notsupported_err = (aar && `DEBUG__AC_AARSIZE(command) != 3'd2) || (aam && (`DEBUG__AC_AARSIZE(command) == 3'd3 || `DEBUG__AC_AARSIZE(command) == 3'd4)) || (aam && `DEBUG__AC_AAMVIRTUAL(command));
-    wire haltresume_err   = (aar && !halted) || (aqa && !running) || (aam && !halted) || debug.haltresume;
+    wire notsupported_err = (aar && `DEBUG__AC_TRANSFER(command) && `DEBUG__AC_AARSIZE(command) != 3'd2) || (aam && (`DEBUG__AC_AARSIZE(command) == 3'd3 || `DEBUG__AC_AARSIZE(command) == 3'd4)) || (aam && `DEBUG__AC_AAMVIRTUAL(command));
+    wire haltresume_err   = (aar && !halted) || (aqa && !running) || (aam && !halted) || (debug.haltresume && exec);
 
     always_comb begin
         cmderr_next = cmderr;
         if (dmi.address == `DEBUG__ABSTRACTCS && dmi.write) begin
             cmderr_next = cmderr_next & ~(dmi.data[10:8]);
         end
-        if(cmderr_next != `DEBUG__AC_ERR_NO_ERR) begin
-            cmderr_next = cmderr_next;
-        end else if(busy_err) begin
-            cmderr_next = `DEBUG__AC_ERR_BUSY;
-        end else if(notsupported_err) begin
-            cmderr_next = `DEBUG__AC_ERR_NOT_SUPPORTED;
-        end else if(debug.exception) begin
-            cmderr_next = `DEBUG__AC_ERR_EXCEPTION;
-        end else if(haltresume_err) begin
-            cmderr_next = `DEBUG__AC_ERR_HALT_RESUME;
-        end else if(debug.bus) begin
-            cmderr_next = `DEBUG__AC_ERR_BUS;
-        end else begin
-            cmderr_next = cmderr_next;
+        if (busy) begin
+            if(cmderr_next != `DEBUG__AC_ERR_NO_ERR) begin
+                cmderr_next = cmderr_next;
+            end else if(busy_err) begin
+                cmderr_next = `DEBUG__AC_ERR_BUSY;
+            end else if(notsupported_err) begin
+                cmderr_next = `DEBUG__AC_ERR_NOT_SUPPORTED;
+            end else if(debug.exception && exec) begin
+                cmderr_next = `DEBUG__AC_ERR_EXCEPTION;
+            end else if(haltresume_err) begin
+                cmderr_next = `DEBUG__AC_ERR_HALT_RESUME;
+            end else if(debug.bus && exec) begin
+                cmderr_next = `DEBUG__AC_ERR_BUS;
+            end else begin
+                cmderr_next = cmderr_next;
+            end
         end
     end
 
@@ -199,7 +201,7 @@ module dm #(
         .SizeWords  (NumWords)
     ) periph_mem_interface (
         .clk              (clk),
-        .rst_n            (dm_reset),
+        .rst_n            (!dm_reset),
         .bus_interface    (bus_interface),
         .hit              (mem_hit),
         .data_periph_in   (memory),

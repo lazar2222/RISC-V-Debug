@@ -43,19 +43,21 @@ module rv_core (
     wire conflict;
     wire timer;
     wire interrupt_pending;
-    wire debug, halted, step, resuming;
+    wire debug, halted, halted_ctrl, abstract, step, resuming, reg_error;
     wire secondary_hit;
 
     assign retire = control_signals.write_pc_ne && !exception;
     assign trap   = exception || interrupt || mret;
 
     assign ir_in  = mem_out;
-    assign mem_in = rs2;
 
-    assign mid_pc   = resuming                 ? d_pc                 : alu_pc;
-    assign next_pc  = trap                     ? trap_pc              : mid_pc;
-    assign mem_addr = control_signals.addr_sel ? shadow_pc            : alu_out;
-    assign mem_size = control_signals.addr_sel ? `ISA__INST_LOAD_SIZE : control_signals.f3;
+    assign mid_pc   =                                       resuming                 ? d_pc                 : alu_pc;
+    assign next_pc  = abstract ? 32'hFFFFFF80             : trap                     ? trap_pc              : mid_pc;
+    assign mem_addr = abstract ? debug_interface.data1_in : control_signals.addr_sel ? shadow_pc            : alu_out;
+    assign mem_size = abstract ? control_signals.f3       : control_signals.addr_sel ? `ISA__INST_LOAD_SIZE : control_signals.f3;
+    assign mem_in   = abstract ? debug_interface.data0_in                                                   : rs2;
+
+    assign debug_interface.data0_out = rd;
 
     always_comb begin
         case (control_signals.rd_sel)
@@ -141,6 +143,9 @@ module rv_core (
 
     inst_decode inst_decode (
         .inst        (ir),
+        .abstract    (abstract),
+        .cmd         (debug_interface.command),
+        .data0       (debug_interface.data0_in),
         .invalid_inst(invalid_inst),
         .opcode      (control_signals.opcode),
         .f3          (control_signals.f3),
@@ -185,8 +190,10 @@ module rv_core (
         .exception        (exception),
         .interrupt_pending(interrupt_pending),
         .debug            (debug),
-        .halted           (halted),
+        .halted           (halted_ctrl),
+        .abstract         (abstract),
         .step             (step),
+        .reg_error        (reg_error),
         .control_signals  (control_signals)
     );
 
@@ -220,7 +227,7 @@ module rv_core (
         .nmi              (nmi),
         .exti             (exti),
         .timer            (timer),
-        .dbg              (halted),
+        .debug            (halted),
         .step             (step),
         .breakp           (1'b0),
         .fault            (fault),
@@ -247,13 +254,20 @@ module rv_core (
         .rst_n      (rst_n),
         .nmi        (nmi),
         .interrupt  (interrupt),
-        .ebreak     (ebreak),
+        .exception  (exception),
+        .eb         (ebreak),
+        .malign     (malign),
+        .fault      (fault),
+        .invalid_csr(invalid_csr),
         .pc_reg     (pc),
         .pc_next    (next_pc),
         .debug      (debug),
-        .halted_ctrl(halted),
+        .halted     (halted),
+        .halted_ctrl(halted_ctrl),
         .step_en    (step),
         .resuming   (resuming),
+        .abstract   (abstract),
+        .reg_error  (reg_error),
         .dpc_out    (d_pc),
         .csrs       (csr_interface),
         .ctrl       (control_signals),

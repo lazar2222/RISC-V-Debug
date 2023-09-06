@@ -30,7 +30,6 @@ void main()
     {
         if(nmi_flag)
         {
-        	((TIM_RegisterMapType *) 0xE0000000)->TIMh = 0;
         	count = !count;
             nmi_flag = 0;
         }

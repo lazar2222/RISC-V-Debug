@@ -26,7 +26,13 @@ void exception_handler(void)
 
 void timer_handler(void)
 {
-	TIM->TIMCMP += TIM_TICK_PER_MS * 1000;
+	uint32_t old = TIM->TIMCMP;
+	uint32_t new = old + TIM_TICK_PER_MS * 100;
+	if(new < old)
+	{
+		TIM->TIMCMPh++;
+	}
+	TIM->TIMCMP = new;
     tim_flag = 1;
 }
 

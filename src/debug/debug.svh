@@ -5,6 +5,12 @@
 `define DEBUG__AC_COMMAND_QUICK_ACCESS    8'd1
 `define DEBUG__AC_COMMAND_ACCESS_MEMORY   8'd2
 
+`define DEBUG__OPCODE_ACCESS_NA  5'b11_111
+`define DEBUG__OPCODE_ACCESS_REG 5'b10_010
+`define DEBUG__OPCODE_EXEC       5'b10_011
+`define DEBUG__OPCODE_READ_MEM   5'b10_100
+`define DEBUG__OPCODE_WRITE_MEM  5'b10_110
+
 `define DEBUG__AC_COMMAND(cmd)    cmd[31:24]
 `define DEBUG__AC_AARSIZE(cmd)    cmd[22:20]
 `define DEBUG__AC_AARPOSTINC(cmd) cmd[19]
@@ -168,8 +174,8 @@
 
 `define DEBUGGEN__GENERATE_INTERFACE(register) \
 reg  [31:0] ``register``_reg;   \
-tri0 [31:0] ``register``_in;    \
-tri0        ``register``_write; \
+wire [31:0] ``register``_in;    \
+wire        ``register``_write; \
 
 `define DEBUGGEN__GENERATE_READ_ASSIGN(register) \
 assign data = dmi.address == `DEBUG__``register`` ? ``register``_reg : {32{1'b0}}; \

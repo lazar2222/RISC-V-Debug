@@ -14,7 +14,7 @@ module int_ctl (
     input exti,
     input timer,
 
-    input dbg,
+    input debug,
     input step,
 
     input breakp,
@@ -40,8 +40,7 @@ module int_ctl (
     output                  interrupt,
     output                  interrupt_pending
 );
-    wire debug      = dbg;
-    wire breakpoint = breakp && !debug;
+        wire breakpoint = breakp && !debug;
 
     wire instruction_start = ctrl.write_ir;
     wire instruction_end   = ctrl.write_pc_ne;
@@ -179,7 +178,7 @@ module int_ctl (
     assign csrs.MCAUSE_write = trap_nm && !debug;
     assign csrs.MTVAL_write  = trap_nm && !debug;
 
-    assign csrs.MEPC_in    = exception ? pc : next_pc;
+    assign csrs.MEPC_in    = (exception || (ebreak && instruction_end)) ? pc : next_pc;
     assign csrs.MEPC_write = trap_nm && !debug;
 
     wire [`ISA__XLEN-1:0] trap_vector = `CSR__MTVEC_TVEC(csrs.MTVEC_reg) + ((`CSR__MTVEC_VECT(csrs.MTVEC_reg) && interrupt) ? {mcause[29:0], 2'b0} : `ISA__ZERO);

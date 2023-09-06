@@ -11,56 +11,84 @@ module d_ctl (
 
     input nmi,
     input interrupt,
-    input ebreak,
+    input exception,
+    input eb,
+
+    input malign,
+    input fault,
+    input invalid_csr,
 
     input [`ISA__XLEN-1:0] pc_reg,
     input [`ISA__XLEN-1:0] pc_next,
 
     output                  debug,
+    output                  halted,
     output                  halted_ctrl,
     output                  step_en,
     output                  resuming,
+    output                  abstract,
+    output                  reg_error,
     output [`ISA__XLEN-1:0] dpc_out,
 
     csr_if             csrs,
     control_signals_if ctrl,
     debug_if           debug_if
 );
-    wire halted;
+    wire progbuf;
+    wire ebreak          = eb && ctrl.write_pc_ne;
     wire ctrl_halted     = ctrl.mcp_addr == `CONTROL_SIGNALS__HALTED;
     wire ctrl_resuming   = ctrl.mcp_addr == `CONTROL_SIGNALS__RESUMING;
     wire instruction_end = (ctrl.write_pc && !ctrl_resuming) || interrupt;
     wire trigger_cause   = 1'b0;
-    wire ebreak_cause    = ebreak && ctrl.write_pc_ne && `CSR__DCSR_EBREAKM(csrs.DCSR_reg);
+    wire ebreak_cause    = ebreak && `CSR__DCSR_EBREAKM(csrs.DCSR_reg) && !interrupt;
     wire halt_cause      = debug_if.halt_req;
     wire step_cause      = step_en && instruction_end;
     wire halt_req        = trigger_cause || ebreak_cause || halt_cause || step_cause;
 
     reg debug_reg;
     reg halted_reg;
+    reg progbuf_reg;
 
     always @(posedge clk) begin
         if(!rst_n) begin
             debug_reg  <= 1'b0;
             halted_reg <= 1'b0;
+            progbuf_reg <= 1'b0;
         end else begin
             debug_reg   <= debug;
             halted_reg  <= halted;
+            progbuf_reg <= progbuf;
         end
     end
 
     assign debug   = (debug_reg    || halt_req)                   && !debug_if.resume_req;
     assign halted  = (halted_reg   || (debug_reg && ctrl_halted)) && !ctrl_resuming;
+    assign progbuf = (progbuf_reg  || ctrl.progbuf)               && !debug_if.done;
 
-    assign halted_ctrl = halted;
+    assign halted_ctrl = halted && !(ebreak && progbuf_reg);
     assign step_en     = `CSR__DCSR_STEP(csrs.DCSR_reg);
     assign resuming    = ctrl_resuming;
+    assign abstract    = debug_if.exec && !progbuf_reg;
     assign dpc_out     = csrs.DPC_reg;
-
-    assign debug_if.halted = halted;
 
     reg [           2:0] cause;
     reg [`ISA__XLEN-1:0] dpc;
+
+    wire aar = `DEBUG__AC_COMMAND(debug_if.command) == `DEBUG__AC_COMMAND_ACCESS_REGISTER;
+    wire aqa = `DEBUG__AC_COMMAND(debug_if.command) == `DEBUG__AC_COMMAND_QUICK_ACCESS;
+    wire aam = `DEBUG__AC_COMMAND(debug_if.command) == `DEBUG__AC_COMMAND_ACCESS_MEMORY;
+
+    assign reg_error      = (aar && ctrl.mcp_addr == `CONTROL_SIGNALS__ABS_REG && `DEBUG__AC_TRANSFER(debug_if.command)) && !(`DEBUG__AC_REG_GPR(debug_if.command) || (`DEBUG__AC_REG_CSR(debug_if.command) && !invalid_csr));
+    wire   postexec_error = exception && !ebreak;
+    wire   autohalt_error = aqa && cause != `DEBUG__CAUSE_HALTREQ;
+    wire   bus_error      = aam && (malign || fault);
+
+    assign debug_if.halted     = halted;
+    assign debug_if.done       = ctrl.abstract_done || (ebreak && progbuf_reg) || postexec_error;
+    assign debug_if.write      = ctrl.abstract_write && !reg_error;
+    assign debug_if.bus        = bus_error;
+    assign debug_if.haltresume = autohalt_error;
+    assign debug_if.exception  = reg_error || postexec_error;
 
     assign csrs.DCSR_in    = {csrs.DCSR_reg[31:9], cause, csrs.DCSR_reg[5:4], nmi, csrs.DCSR_reg[2:0]};
     assign csrs.DCSR_write = 1'b1;

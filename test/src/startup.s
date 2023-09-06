@@ -34,8 +34,16 @@ _start:
     .option norelax
     la gp, __global_pointer$
     .option pop
-    li x2, 0
-    la x2, __stack_pointer
+    la sp, __stack_pointer
+    la t0, __bss_start
+    la t1, __BSS_END__
+    li t2, 0
+loop:
+	beq t0,t1, next
+	sw t2, 0(t0)
+	addi t0, t0, 4
+	j loop
+next:
     call main
     j .
 

@@ -45,7 +45,7 @@ module periph_mem_interface #(
     reg  [         DataWidth-1:0] data_out;
 
     reg  read_hit;
-    assign hit       = device_address == DeviceAddress;
+    assign hit       = device_address == DeviceAddress && rst_n;
     wire write_hit   = hit && bus_interface.write;
     wire data_enable = read_hit && !bus_interface.intercept;
 

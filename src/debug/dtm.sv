@@ -41,7 +41,7 @@ module dtm (
     localparam int SR_LEN     = 41;
 
     localparam logic [BYPASS_LEN-1:0] BYPASS_VALUE =  1'b0;
-    localparam logic [IDCODE_LEN-1:0] IDCODE_VALUE = 32'h1;
+    localparam logic [IDCODE_LEN-1:0] IDCODE_VALUE = 32'h537291;
 
     localparam logic [1:0] OP_NOP   = 2'd0;
     localparam logic [1:0] OP_READ  = 2'd1;
@@ -107,7 +107,7 @@ module dtm (
             if (tck_re) begin
                 state_reg <= state_next;
                 case (state_reg)
-                    CAPTURE_DR: begin sr <= sr_next;                              sr_len <= sr_len_next; end
+                    CAPTURE_DR: begin sr <= sr_next;                        sr_len <= sr_len_next; end
                     CAPTURE_IR: begin sr <= {IDCODE,{SR_LEN-IR_LEN{1'b0}}}; sr_len <= IR_LEN;      end
                     SHIFT_DR,
                     SHIFT_IR:   sr <= {tdi,sr[SR_LEN-1:1]};
@@ -118,6 +118,7 @@ module dtm (
                 tdo_reg <= tdo_next;
                 tdo_en  <= state_sdr || state_sir;
             end
+            if (tck_fe && state_reg == TEST_LOGIC_RESET)         begin ir         <= IDCODE;                                      end
             if (tck_fe && state_reg == UPDATE_IR)                begin ir         <= sr[SR_LEN-1:SR_LEN-IR_LEN];                  end
             if (tck_fe && state_reg == UPDATE_DR && ir == DMIA)  begin dmia       <= sr;                         in_prog <= 1'b1; end
             if (in_prog) begin
