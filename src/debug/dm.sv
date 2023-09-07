@@ -111,7 +111,7 @@ module dm #(
     wire aqa = `DEBUG__AC_COMMAND(command) == `DEBUG__AC_COMMAND_QUICK_ACCESS;
     wire aam = `DEBUG__AC_COMMAND(command) == `DEBUG__AC_COMMAND_ACCESS_MEMORY;
     
-    assign DATA1_in    = DATA0_reg + 32'd1;
+    assign DATA1_in    = DATA1_reg + (3'd2 ** `DEBUG__AC_AARSIZE(command));
     assign DATA1_write = debug.done && aam && `DEBUG__AC_AARPOSTINC(command) && cmderr_next == `DEBUG__AC_ERR_NO_ERR;
 
     wire busy_err = busy &&
@@ -122,7 +122,7 @@ module dm #(
     );
 
     wire notsupported_err = (aar && `DEBUG__AC_TRANSFER(command) && `DEBUG__AC_AARSIZE(command) != 3'd2) || (aam && (`DEBUG__AC_AARSIZE(command) == 3'd3 || `DEBUG__AC_AARSIZE(command) == 3'd4)) || (aam && `DEBUG__AC_AAMVIRTUAL(command));
-    wire haltresume_err   = (aar && !halted) || (aqa && !running) || (aam && !halted) || (debug.haltresume && exec);
+    wire haltresume_err   = (aar && !halted) || (aqa && !running && !exec) || (aam && !halted) || (debug.haltresume && exec);
 
     always_comb begin
         cmderr_next = cmderr;
