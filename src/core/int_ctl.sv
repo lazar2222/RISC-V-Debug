@@ -40,7 +40,7 @@ module int_ctl (
     output                  interrupt,
     output                  interrupt_pending
 );
-        wire breakpoint = breakp && !debug;
+    wire breakpoint = breakp && !debug;
 
     wire instruction_start = ctrl.write_ir;
     wire instruction_end   = ctrl.write_pc_ne;

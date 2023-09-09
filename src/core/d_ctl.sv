@@ -51,7 +51,7 @@ module d_ctl (
     reg progbuf_reg;
 
     always @(posedge clk) begin
-        if(!rst_n) begin
+        if (!rst_n) begin
             debug_reg  <= 1'b0;
             halted_reg <= 1'b0;
             progbuf_reg <= 1'b0;
@@ -97,7 +97,7 @@ module d_ctl (
     assign csrs.DPC_write  = debug && !debug_reg;
 
     always_comb begin
-        if(trigger_cause) begin
+        if (trigger_cause) begin
             dpc = pc_reg;
         end else if (ebreak_cause) begin
             dpc = pc_reg;
@@ -114,8 +114,8 @@ module d_ctl (
         if (!rst_n) begin
             cause <= 3'd0;
         end else begin
-            if(debug && !debug_reg) begin
-                if(trigger_cause) begin
+            if (debug && !debug_reg) begin
+                if (trigger_cause) begin
                     cause <= `DEBUG__CAUSE_TRIGGER;
                 end else if (ebreak_cause) begin
                     cause <= `DEBUG__CAUSE_EBREAK;

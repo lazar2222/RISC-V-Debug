@@ -92,7 +92,7 @@ module dtm (
             tck_reg    <= 3'd0;
             tms_reg    <= 3'd0;
             tdi_reg    <= 3'd0;
-            tdo_reg    <= 1'd0;
+            tdo_reg    <= 1'b0;
             tdo_en     <= 1'b0;
             state_reg  <= TEST_LOGIC_RESET;
             ir         <= IDCODE;

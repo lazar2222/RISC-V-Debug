@@ -11,6 +11,8 @@ module rv_core (
     input nmi,
     input exti,
 
+    output csr_hit,
+
     arilla_bus_if bus_interface,
     debug_if      debug_interface
 );
@@ -44,9 +46,8 @@ module rv_core (
     wire timer;
     wire interrupt_pending;
     wire debug, halted, halted_ctrl, abstract, step, resuming, reg_error;
-    wire secondary_hit;
 
-    assign retire = control_signals.write_pc_ne && !exception;
+    assign retire = control_signals.write_pc_ne && !(exception || ecall || ebreak);
     assign trap   = exception || interrupt || mret;
 
     assign ir_in  = mem_out;
@@ -124,7 +125,9 @@ module rv_core (
         .rd_data2(rs2)
     );
 
-    mem_interface mem_interface (
+    mem_interface #(
+        .InhibitPolarity(1'b0)
+    ) mem_interface (
         .clk           (clk),
         .rst_n         (rst_n),
         .bus_interface (bus_interface),
@@ -132,7 +135,6 @@ module rv_core (
         .sign_size     (mem_size),
         .rd            (control_signals.mem_read),
         .wr            (control_signals.mem_write),
-        .secondary_hit (secondary_hit),
         .data_in       (mem_in),
         .data_out      (mem_out),
         .complete      (control_signals.mem_complete),
@@ -204,7 +206,7 @@ module rv_core (
         .rst_n        (rst_n),
         .csr_interface(csr_interface),
         .bus_interface(bus_interface),
-        .mem_hit      (secondary_hit),
+        .mem_hit      (csr_hit),
         .reg_in       (rs1),
         .imm_in       (csri),
         .addr         (imm),

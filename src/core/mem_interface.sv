@@ -1,6 +1,8 @@
 `include "../system/arilla_bus_if.svh"
 
-module mem_interface (
+module mem_interface #(
+    parameter logic InhibitPolarity
+) (
     clk,
     rst_n,
     bus_interface,
@@ -8,7 +10,6 @@ module mem_interface (
     sign_size,
     rd,
     wr,
-    secondary_hit,
     data_in,
     data_out,
     complete,
@@ -33,7 +34,6 @@ module mem_interface (
     input [          SizeSize:0] sign_size;
     input                        rd;
     input                        wr;
-    input                        secondary_hit;
 
     input  [DataWidth-1:0] data_in;
     output [DataWidth-1:0] data_out;
@@ -43,7 +43,7 @@ module mem_interface (
     output reg                        fault;
     output reg [ByteAddressWidth-1:0] address_reg;
 
-    wire hit = bus_interface.hit || secondary_hit;
+    wire hit = bus_interface.hit;
 
     reg [SizeSize-1:0] size_reg;
     reg                sign_reg;
@@ -91,12 +91,14 @@ module mem_interface (
 
     wire valid = !malign_w && hit;
 
-    assign bus_interface.data_ctp    = !bus_interface.inhibit ? shift_data_in : {DataWidth{1'bz}};
-    assign bus_interface.address     = !bus_interface.inhibit ? address[ByteAddressWidth-1:MaxSize] : {WordAddressWidth{1'bz}};
-    assign bus_interface.byte_enable = !bus_interface.inhibit ? byte_enable : {BytesPerWord{1'bz}};
-    assign bus_interface.read        = !bus_interface.inhibit ? valid && rd : 1'bz;
-    assign bus_interface.write       = !bus_interface.inhibit ? valid && wr : 1'bz;
-    assign complete                  = !bus_interface.inhibit && (rd || wr);
+    wire inhibit = InhibitPolarity ? bus_interface.inhibit : !bus_interface.inhibit;
+
+    assign bus_interface.data_ctp    = inhibit ? shift_data_in                       : {DataWidth{1'bz}};
+    assign bus_interface.address     = inhibit ? address[ByteAddressWidth-1:MaxSize] : {WordAddressWidth{1'bz}};
+    assign bus_interface.byte_enable = inhibit ? byte_enable                         : {BytesPerWord{1'bz}};
+    assign bus_interface.read        = inhibit ? valid && rd                         : 1'bz;
+    assign bus_interface.write       = inhibit ? valid && wr                         : 1'bz;
+    assign complete                  = inhibit && (rd || wr);
 
     wire [DataWidth-1:0] data           = bus_interface.data_ptc;
     wire [DataWidth-1:0] shift_data_out = data >> (address_reg[MaxSize-1:0] * ByteSize);

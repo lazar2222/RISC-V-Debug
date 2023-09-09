@@ -64,6 +64,9 @@
 `define DEBUG__PROGBUF13    7'h2D
 `define DEBUG__PROGBUF14    7'h2E
 `define DEBUG__PROGBUF15    7'h2F
+`define DEBUG__SBCS         7'h38
+`define DEBUG__SBADDRESS0   7'h39
+`define DEBUG__SBDATA0      7'h3c
 `define DEBUG__HALTSUM0     7'h40
 
 `define DEBUG__HARTINFO_VALUE     20'h0021C
@@ -141,6 +144,20 @@
 `define DEBUG__CAUSE_STEP    3'd4
 
 `define DEBUG__EBREAK 32'h00100073
+
+`define DEBUG__SBCS_SBBUSYERROR(r)     r[22]
+`define DEBUG__SBCS_SBREADONADDR(r)    r[20]
+`define DEBUG__SBCS_SBACCESS(r)        r[19:17]
+`define DEBUG__SBCS_SBAUTOINCREMENT(r) r[16]
+`define DEBUG__SBCS_SBREADONDATA(r)    r[15]
+`define DEBUG__SBCS_SBERROR(r)         r[14:12]
+
+`define DEBUG__SB_ERR_NO_ERR  3'd0
+`define DEBUG__SB_ERR_TIMEOUT 3'd1
+`define DEBUG__SB_ERR_FAULT   3'd2
+`define DEBUG__SB_ERR_MALIGN  3'd3
+`define DEBUG__SB_ERR_SIZE    3'd4
+`define DEBUG__SB_ERR_OTHER   3'd7
 
 `define DEBUGGEN__FOREACH_SIMPLE(TARGET) \
 `TARGET(DATA0)        \

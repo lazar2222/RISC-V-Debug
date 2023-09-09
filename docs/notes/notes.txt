@@ -1,45 +1,14 @@
 early breakpoint
 
-core
-		control_signals
-		control
-	d_ctl
-	inst decode
-	rvcore
-debug
-	debug_if
-	debug_svh
-	dm
+trigger select
+control
+mcontext
+scontext
 	
-	
-Abstract command errors
-Possible errors
-	NO ERROR 0
-	BUSY     1
-	NOT SUPPORTED 2
-	EXCEPTION     3
-	HALT RESUME   4
-	BUS           5
-	OTHER         7
-ReadReg
-	DMCHECK
-			HALT RESUME
-			NOT SUPPORTED(AARSIZE)
-	CORECHECK
-		EXCEPTION (INVALID ADDR)
-		EXCEPTION (INVALID CSR)
-		EXCEPTION (POSTEXEC EXCEPTION)
-Autoexec
-	DMCHECK
-			HALT RESUME
-	CORECHECK
-		HALT RESUME (CAUSE)
-		EXCEPTION (PROGBUF EXCEPTION)
-		
-ReadMem
-	DMCHECK
-			NOT SUPPORTED (virtual address)
-			NOT SUPPORTED (assmsize)
-	CORECHECK
-		BUS MALIGN
-		BUS FAULT
+	tdata1
+	tdata2
+	tdata3
+	info
+	trigger extra
+match control
+instructioncount

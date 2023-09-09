@@ -51,6 +51,20 @@ module dm #(
     reg [DmiDataWidth-1:0] command;
     reg [DmiDataWidth-1:0] abstractauto;
 
+    reg                    sbbusy_error;
+    reg                    sbbusy;
+    reg                    sbreadonaddr;
+    reg [             2:0] sbaccess;
+    reg                    sbautoincrement;
+    reg                    sbreadondata;
+    reg [             2:0] sberror, sberror_next;
+    reg [DmiDataWidth-1:0] sbdata;
+    reg [DmiDataWidth-1:0] sbaddr, sbaddr_next;
+    reg                    sb_read;
+    reg                    sb_write;
+    reg                    sb_readout;
+    reg                    sb_writeout;
+
     `DEBUGGEN__FOREACH_SIMPLE(DEBUGGEN__GENERATE_INTERFACE)
 
     wire resumereq    = dmi.address == `DEBUG__DMCONTROL && dmi.write && `DEBUG__DMCONTROL_RESUMEREQ(dmi.data) && !`DEBUG__DMCONTROL_HALTREQ(dmi.data);
@@ -74,6 +88,7 @@ module dm #(
     wire [DmiDataWidth-1:0] hartinfo   = {`DEBUG__HARTINFO_VALUE,DataStart};
     wire [DmiDataWidth-1:0] abstractcs = {3'd0,5'd16,11'd0,busy,1'b0,cmderr,4'd0,4'd12};
     wire [DmiDataWidth-1:0] haltsum    = {31'd0,halted};
+    wire [DmiDataWidth-1:0] sbcs       = {3'd1,6'd0,sbbusy_error,sbbusy,sbreadonaddr,sbaccess,sbautoincrement,sbreadondata,sberror,7'd32,5'b00111};
 
     wor [DmiDataWidth-1:0] data;
 
@@ -84,6 +99,9 @@ module dm #(
     assign data = dmi.address == `DEBUG__ABSTRACTCS   ? abstractcs   : {DmiDataWidth{1'b0}};
     assign data = dmi.address == `DEBUG__ABSTRACTAUTO ? abstractauto : {DmiDataWidth{1'b0}};
     assign data = dmi.address == `DEBUG__HALTSUM0     ? haltsum      : {DmiDataWidth{1'b0}};
+    assign data = dmi.address == `DEBUG__SBCS         ? sbcs         : {DmiDataWidth{1'b0}};
+    assign data = dmi.address == `DEBUG__SBADDRESS0   ? sbaddr       : {DmiDataWidth{1'b0}};
+    assign data = dmi.address == `DEBUG__SBDATA0      ? sbdata       : {DmiDataWidth{1'b0}};
 
     `DEBUGGEN__FOREACH_SIMPLE(DEBUGGEN__GENERATE_READ_ASSIGN)
 
@@ -103,6 +121,11 @@ module dm #(
     
     wire [BusDataWidth-1:0] mem_out;
     wire [    NumWords-1:0] mem_write;
+
+    wire [BusDataWidth-1:0] sb_out;
+    wire                    sb_complete;
+    wire                    sb_malign;
+    wire                    sb_fault;
     
     `DEBUGGEN__FOREACH_SIMPLE(DEBUGGEN__GENERATE_MEMORY_ASSIGN)
     `DEBUGGEN__FOREACH_SIMPLE(DEBUGGEN__GENERATE_MEMORY_GUARD_ASSIGN)
@@ -111,6 +134,7 @@ module dm #(
     wire aqa = `DEBUG__AC_COMMAND(command) == `DEBUG__AC_COMMAND_QUICK_ACCESS;
     wire aam = `DEBUG__AC_COMMAND(command) == `DEBUG__AC_COMMAND_ACCESS_MEMORY;
     
+    assign sbaddr_next = sbaddr + (3'd2 ** sbaccess);
     assign DATA1_in    = DATA1_reg + (3'd2 ** `DEBUG__AC_AARSIZE(command));
     assign DATA1_write = debug.done && aam && `DEBUG__AC_AARPOSTINC(command) && cmderr_next == `DEBUG__AC_ERR_NO_ERR;
 
@@ -130,20 +154,37 @@ module dm #(
             cmderr_next = cmderr_next & ~(dmi.data[10:8]);
         end
         if (busy) begin
-            if(cmderr_next != `DEBUG__AC_ERR_NO_ERR) begin
+            if (cmderr_next != `DEBUG__AC_ERR_NO_ERR) begin
                 cmderr_next = cmderr_next;
-            end else if(busy_err) begin
+            end else if (busy_err) begin
                 cmderr_next = `DEBUG__AC_ERR_BUSY;
-            end else if(notsupported_err) begin
+            end else if (notsupported_err) begin
                 cmderr_next = `DEBUG__AC_ERR_NOT_SUPPORTED;
-            end else if(debug.exception && exec) begin
+            end else if (debug.exception && exec) begin
                 cmderr_next = `DEBUG__AC_ERR_EXCEPTION;
-            end else if(haltresume_err) begin
+            end else if (haltresume_err) begin
                 cmderr_next = `DEBUG__AC_ERR_HALT_RESUME;
-            end else if(debug.bus && exec) begin
+            end else if (debug.bus && exec) begin
                 cmderr_next = `DEBUG__AC_ERR_BUS;
             end else begin
                 cmderr_next = cmderr_next;
+            end
+        end
+        sberror_next = sberror;
+        if (dmi.address == `DEBUG__SBCS && dmi.write) begin
+            sberror_next = sberror_next & ~`DEBUG__SBCS_SBERROR(dmi.data);
+        end
+        if (sbbusy) begin
+            if (sberror_next != `DEBUG__SB_ERR_NO_ERR) begin
+                sberror_next = sberror_next;
+            end else if (sb_fault && (sb_readout || sb_writeout)) begin
+                sberror_next = `DEBUG__SB_ERR_FAULT;
+            end else if (sb_malign && (sb_readout || sb_writeout)) begin
+                sberror_next = `DEBUG__SB_ERR_MALIGN;
+            end else if (sbaccess > 2 && (sb_read || sb_write)) begin
+                sberror_next = `DEBUG__SB_ERR_SIZE;
+            end else begin
+                sberror_next = sberror_next;
             end
         end
     end
@@ -163,6 +204,20 @@ module dm #(
             command         <= {BusDataWidth{1'b0}};
             abstractauto    <= {BusDataWidth{1'b0}};
 
+            sbbusy_error    <= 1'b0;
+            sbbusy          <= 1'b0;
+            sbreadonaddr    <= 1'b0;
+            sbaccess        <= 3'd2;
+            sbautoincrement <= 1'b0;
+            sbreadondata    <= 1'b0;
+            sberror         <= 3'd0;
+            sbdata          <= {BusDataWidth{1'b0}};
+            sbaddr          <= {BusDataWidth{1'b0}};
+            sb_read         <= 1'b0;
+            sb_write        <= 1'b0;
+            sb_readout      <= 1'b0;
+            sb_writeout     <= 1'b0;
+
             `DEBUGGEN__FOREACH_SIMPLE(DEBUGGEN__GENERATE_INITIAL_VALUE_SIMPLE)
         end else begin
             havereset       <= (havereset || hart_reset) && !ackhavereset;
@@ -178,12 +233,46 @@ module dm #(
                 resethaltreq <= `DEBUG__DMCONTROL_CLRRESETHALTREQ(dmi.data) ? 1'b0 : `DEBUG__DMCONTROL_SETRESETHALTREQ(dmi.data) ? 1'b1 : resethaltreq;
             end
             `DEBUGGEN__FOREACH_SIMPLE(DEBUGGEN__GENERATE_WRITE_SIMPLE)
-            if(dmi.address == `DEBUG__COMMAND && dmi.write && cmderr == `DEBUG__AC_ERR_NO_ERR && busy == 1'b0) begin
+            if (dmi.address == `DEBUG__COMMAND && dmi.write && cmderr == `DEBUG__AC_ERR_NO_ERR && busy == 1'b0) begin
                 command <= dmi.data;
                 busy    <= 1'b1;
             end
-            if(dmi.address == `DEBUG__ABSTRACTAUTO && dmi.write) begin
+            if (dmi.address == `DEBUG__ABSTRACTAUTO && dmi.write) begin
                 abstractauto <= dmi.data && 32'hFFFF0FFF;
+            end
+            sberror <= sberror_next;
+            if (dmi.address == `DEBUG__SBCS && dmi.write) begin
+                sbbusy_error    <= sbbusy_error & ~`DEBUG__SBCS_SBBUSYERROR(dmi.data); 
+                sbreadonaddr    <= `DEBUG__SBCS_SBREADONADDR(dmi.data);
+                sbaccess        <= `DEBUG__SBCS_SBACCESS(dmi.data);
+                sbautoincrement <= `DEBUG__SBCS_SBAUTOINCREMENT(dmi.data);
+                sbreadondata    <= `DEBUG__SBCS_SBREADONDATA(dmi.data);
+            end
+            if (dmi.address == `DEBUG__SBADDRESS0 && dmi.write) begin
+                if (sbbusy) begin
+                    sbbusy_error <= 1'b1;
+                end else if (sberror == `DEBUG__SB_ERR_NO_ERR && !sbbusy_error && sbreadonaddr) begin
+                    sbaddr  <= dmi.data;
+                    sbbusy  <= 1'b1;
+                    sb_read <= 1'b1;
+                end
+            end
+            if (dmi.address == `DEBUG__SBDATA0 && dmi.write) begin
+                if (sbbusy) begin
+                    sbbusy_error <= 1'b1;
+                end else if (sberror == `DEBUG__SB_ERR_NO_ERR && !sbbusy_error) begin
+                    sbdata   <= dmi.data;
+                    sbbusy   <= 1'b1;
+                    sb_write <= 1'b1;
+                end
+            end
+            if (dmi.address == `DEBUG__SBDATA0 && dmi.read) begin
+                if (sbbusy) begin
+                    sbbusy_error <= 1'b1;
+                end else if (sberror == `DEBUG__SB_ERR_NO_ERR && !sbbusy_error) begin
+                    sbbusy  <= 1'b1;
+                    sb_read <= sbreadondata;
+                end
             end
             `DEBUGGEN__FOREACH_SIMPLE(DEBUGGEN__GENERATE_AUTOEXEC)
             if (debug.done) begin
@@ -191,6 +280,31 @@ module dm #(
                 exec <= 1'b0;
                 if (aar && `DEBUG__AC_AARPOSTINC(command) && cmderr_next == `DEBUG__AC_ERR_NO_ERR) begin
                     command <= {command[31:16],(command[15:0]+16'd1)};
+                end
+            end
+            if (sbbusy) begin
+                if (sb_write) begin
+                    sb_write    <= 1'b0;
+                    sb_writeout <= 1'b1;
+                end 
+                if (sb_read) begin
+                    sb_read    <= 1'b0;
+                    sb_readout <= 1'b1;
+                end
+                if (!(sb_write || sb_read)) begin
+                    sbbusy <= 1'b0;
+                    if (sb_readout) begin
+                        if(sberror_next == `DEBUG__SB_ERR_NO_ERR)begin
+                        sbdata <= sb_out;
+                        end
+                        sb_readout <= 1'b0;
+                    end
+                    if (sb_writeout) begin
+                        sb_writeout <= 1'b0;
+                    end
+                    if (sberror_next == `DEBUG__SB_ERR_NO_ERR && sbautoincrement) begin
+                        sbaddr <= sbaddr_next;
+                    end
                 end
             end
         end
@@ -207,6 +321,25 @@ module dm #(
         .data_periph_in   (memory),
         .data_periph_out  (mem_out),
         .data_periph_write(mem_write)
+    );
+
+    assign bus_interface.inhibit = (sb_read && sberror_next == `DEBUG__SB_ERR_NO_ERR) || (sb_write && sberror_next == `DEBUG__SB_ERR_NO_ERR);
+
+    mem_interface #(
+        .InhibitPolarity(1'b1)
+    ) mem_interface (
+        .clk           (clk),
+        .rst_n         (!dm_reset),
+        .bus_interface (bus_interface),
+        .address       (sbaddr),
+        .sign_size     (sbaccess),
+        .rd            (sb_read && sberror_next == `DEBUG__SB_ERR_NO_ERR),
+        .wr            (sb_write && sberror_next == `DEBUG__SB_ERR_NO_ERR),
+        .data_in       (sbdata),
+        .data_out      (sb_out),
+        .complete      (sb_complete),
+        .malign        (sb_malign),
+        .fault         (sb_fault)
     );
 
 endmodule

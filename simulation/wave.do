@@ -35,6 +35,7 @@ add wave -noupdate -expand -group {debug_interface} /testbench/top/debug_interfa
 add wave -noupdate -expand -group {dm} /testbench/top/dm/*
 add wave -noupdate -expand -group {d_ctl} /testbench/top/rv_core/d_ctl/*
 add wave -noupdate -expand -group {control} -radix MCP /testbench/top/rv_core/control/*
+add wave -noupdate /testbench/top/memory/altsyncram/m_default/altsyncram_inst/mem_data[0]
 add wave -noupdate -expand -group {rv_core} /testbench/top/rv_core/*
 add wave -noupdate -expand -group {control_signals} /testbench/top/rv_core/control_signals/*
 add wave -noupdate -expand /testbench/top/rv_core/reg_file/registers
