@@ -46,6 +46,7 @@ module rv_core (
     wire timer;
     wire interrupt_pending;
     wire debug, halted, halted_ctrl, abstract, step, resuming, reg_error;
+    wire trigger;
 
     assign retire = control_signals.write_pc_ne && !(exception || ecall || ebreak);
     assign trap   = exception || interrupt || mret;
@@ -196,6 +197,7 @@ module rv_core (
         .abstract         (abstract),
         .step             (step),
         .reg_error        (reg_error),
+        .trigger          (trigger),
         .control_signals  (control_signals)
     );
 
@@ -258,6 +260,7 @@ module rv_core (
         .interrupt  (interrupt),
         .exception  (exception),
         .eb         (ebreak),
+        .trig       (trigger),
         .malign     (malign),
         .fault      (fault),
         .invalid_csr(invalid_csr),
@@ -274,6 +277,21 @@ module rv_core (
         .csrs       (csr_interface),
         .ctrl       (control_signals),
         .debug_if   (debug_interface)
+    );
+
+    t_ctl t_ctl (
+        .clk          (clk),
+        .rst_n        (rst_n),
+        .pc           (pc),
+        .ir           (ir),
+        .addr         (alu_out),
+        .mem_out      (mem_out),
+        .mem_in       (mem_in),
+        .mem_size     (mem_size[1:0]),
+        .debug        (halted),
+        .ctrl         (control_signals),
+        .trigger      (trigger),
+        .csr_interface(csr_interface)
     );
 
 endmodule

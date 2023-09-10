@@ -13,6 +13,6 @@ typedef struct
 
 #define TIM ((TIM_RegisterMapType *) 0xF0000000)
 
-#define TIM_TICK_PER_MS 40000
+#define TIM_TICK_PER_MS 35000
 
 #endif

@@ -13,6 +13,7 @@ module d_ctl (
     input interrupt,
     input exception,
     input eb,
+    input trig,
 
     input malign,
     input fault,
@@ -39,7 +40,7 @@ module d_ctl (
     wire ctrl_halted       = ctrl.mcp_addr == `CONTROL_SIGNALS__HALTED;
     wire ctrl_resuming     = ctrl.mcp_addr == `CONTROL_SIGNALS__RESUMING;
     wire instruction_end   = (ctrl.write_pc && !ctrl_resuming) || interrupt;
-    wire trigger_cause     = 1'b0;
+    wire trigger_cause     = trig;
     wire ebreak_cause      = ebreak && `CSR__DCSR_EBREAKM(csrs.DCSR_reg) && !interrupt;
     wire halt_cause        = debug_if.halt_req;
     wire step_cause        = step_en && instruction_end;

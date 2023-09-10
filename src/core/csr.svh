@@ -45,6 +45,15 @@
 `define CSR__DSCRATCH0        12'h7B2
 `define CSR__DSCRATCH1        12'h7B3
 
+`define CSR__TSELECT          12'h7A0
+`define CSR__TDATA1           12'h7A1
+`define CSR__TDATA2           12'h7A2
+`define CSR__TDATA3           12'h7A3
+`define CSR__TINFO            12'h7A4
+`define CSR__TCONTROL         12'h7A5
+`define CSR__MCONTEXT         12'h7A8
+`define CSR__SCONTEXT         12'h7AA
+
 `define CSR__MCYCLE_MASK         32'hFFFFFFFF
 `define CSR__MCYCLEH_MASK        32'hFFFFFFFF
 `define CSR__MINSTRET_MASK       32'hFFFFFFFF
@@ -202,32 +211,51 @@
 `TARGET(DSCRATCH0) \
 `TARGET(DSCRATCH1) \
 
+`define CSRGEN__FOREACH_TRIGGER(TARGET) \
+`TARGET(TSELECT)  \
+`TARGET(TDATA1)   \
+`TARGET(TDATA2)   \
+`TARGET(TDATA3)   \
+`TARGET(TINFO)    \
+`TARGET(TCONTROL) \
+`TARGET(MCONTEXT) \
+`TARGET(SCONTEXT) \
+
 `define CSRGEN__GENERATE_INTERFACE(csr) \
 reg  [`ISA__XLEN-1:0] ``csr``_reg;   \
 wire [`ISA__XLEN-1:0] ``csr``_in;    \
 wire                  ``csr``_write; \
 
+`define CSRGEN__GENERATE_PSEUDO_INTERFACE(csr) \
+wire [`ISA__XLEN-1:0] ``csr``_reg;   \
+wire [`ISA__XLEN-1:0] ``csr``_in;    \
+wire                  ``csr``_write; \
+
 `define CSRGEN__GENERATE_READ_ASSIGN(csr) \
 assign csr_out = address == `CSR__``csr`` ? csr_interface.``csr``_reg : {`ISA__XLEN{1'bz}}; \
-assign hit     = address == `CSR__``csr``;                                    \
+assign hit     = address == `CSR__``csr``;                                                  \
 
 `define CSRGEN__GENERATE_READ_ASSIGN_MRO(csr) \
 assign csr_out = address == `CSR__``csr`` ? `CSR__``csr``_VALUE : {`ISA__XLEN{1'bz}}; \
-assign hit     = address == `CSR__``csr``;                              \
+assign hit     = address == `CSR__``csr``;                                            \
 
 `define CSRGEN__GENERATE_ARRAY_READ_ASSIGN_MRO(csr, i) \
 assign csr_out = address == `CSR__``csr``(i) ? `CSR__``csr``_VALUE : {`ISA__XLEN{1'bz}}; \
-assign hit     = address == `CSR__``csr``(i);                              \
+assign hit     = address == `CSR__``csr``(i);                                            \
 
 `define CSRGEN__GENERATE_INITIAL_VALUE(csr) \
 csr_interface.``csr``_reg <= `CSR__``csr``_VALUE; \
 
 `define CSRGEN__GENERATE_WRITE(csr) \
-if (address == `CSR__``csr`` && write_reg && `CSR__``csr``_MASK != `ISA__ZERO) begin                                                                   \
+if (address == `CSR__``csr`` && write_reg && `CSR__``csr``_MASK != `ISA__ZERO) begin                               \
     csr_interface.``csr``_reg <= (value & `CSR__``csr``_MASK) | (csr_interface.``csr``_reg & ~`CSR__``csr``_MASK); \
 end else if (csr_interface.``csr``_write) begin                                                                    \
     csr_interface.``csr``_reg <= csr_interface.``csr``_in;                                                         \
 end                                                                                                                \
+
+`define CSRGEN__GENERATE_PSEUDO_WRITE(csr) \
+    assign csr_interface.``csr``_in    = value;                                 \
+    assign csr_interface.``csr``_write = address == `CSR__``csr`` && write_reg; \
 
 `define CSRGEN__GENERATE_CONFLICT(csr) \
 assign conflict = (address == `CSR__``csr`` && write_reg && `CSR__``csr``_MASK != `ISA__ZERO); \

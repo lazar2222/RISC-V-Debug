@@ -34,6 +34,8 @@ add wave -noupdate -expand -group {dmi_interface} /testbench/top/dmi_interface/*
 add wave -noupdate -expand -group {debug_interface} /testbench/top/debug_interface/*
 add wave -noupdate -expand -group {dm} /testbench/top/dm/*
 add wave -noupdate -expand -group {d_ctl} /testbench/top/rv_core/d_ctl/*
+add wave -noupdate -expand -group {t_ctl} /testbench/top/rv_core/t_ctl/*
+add wave -noupdate -expand -group {trig} /testbench/top/rv_core/t_ctl/g_trig[0]/trigger/*
 add wave -noupdate -expand -group {control} -radix MCP /testbench/top/rv_core/control/*
 add wave -noupdate /testbench/top/memory/altsyncram/m_default/altsyncram_inst/mem_data[0]
 add wave -noupdate -expand -group {rv_core} /testbench/top/rv_core/*

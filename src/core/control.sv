@@ -29,6 +29,7 @@ module control (
     input abstract,
     input step,
     input reg_error,
+    input trigger,
 
     control_signals_if control_signals
 );
@@ -203,6 +204,11 @@ module control (
             control_signals.write_pc_ex = 1'b1;
             `CONTROL__READ_INST
         end
+        if (trigger) begin
+            control_signals.write_rd    = 1'b0;
+            control_signals.write_csr   = 1'b0;
+            control_signals.mem_write   = 1'b0;
+        end
     end
 
     always_comb begin
@@ -238,6 +244,9 @@ module control (
             mcp_next = debug ? `CONTROL_SIGNALS__HALTED : control_signals.mem_complete ? `CONTROL_SIGNALS__DISPATCH : `CONTROL_SIGNALS__PROLOGUE;
         end
         if (debug && !halted && (mcp_next == `CONTROL_SIGNALS__DISPATCH || mcp_next == `CONTROL_SIGNALS__PROLOGUE)) begin
+            mcp_next = `CONTROL_SIGNALS__HALTED;
+        end
+        if (trigger) begin
             mcp_next = `CONTROL_SIGNALS__HALTED;
         end
     end
