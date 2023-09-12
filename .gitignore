@@ -13,3 +13,25 @@ build/
 
 !project/output_files/*.sof
 !project/output_files/*.cdf
+
+thesis/*.aux
+thesis/*.lof
+thesis/*.log
+thesis/*.lot
+thesis/*.out
+thesis/*.toc
+
+thesis/*.acn
+thesis/*.acr
+
+thesis/*.bbl
+thesis/*.bcf
+thesis/*.blg
+thesis/*.glg
+thesis/*.alg
+thesis/*.glo
+thesis/*.gls
+thesis/*.ist
+
+thesis/*.run.xml
+thesis/*.synctex.gz

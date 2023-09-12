@@ -1,0 +1,144 @@
+\usepackage{microtype}
+\usepackage{polyglossia}
+\defaultfontfeatures{Mapping=tex-text}
+\setdefaultlanguage[script=Cyrillic,numerals=cyrillic-alph]{serbian}
+\setotherlanguage{english}
+
+\usepackage{csquotes}
+\DeclareQuoteAlias{croatian}{serbian}
+\DeclareQuoteAlias{croatian}{serbianc}
+\MakeOuterQuote{"}
+
+\newif\ifcmu
+%\cmutrue
+\cmufalse
+
+\ifcmu
+	\setmainfont[SmallCapsFont={CMU Serif},SmallCapsFeatures={Language=Default,Letters=SmallCaps}]{CMU Serif}
+	\setsansfont{CMU Sans Serif}
+	\setmonofont{CMU Typewriter Text}
+\else
+	\setmainfont[SmallCapsFont={Times New Roman},SmallCapsFeatures={Language=Default,Letters=SmallCaps}]{Times New Roman}
+	\setsansfont{Arial}
+	\setmonofont{Courier New}
+\fi
+
+\selectlanguage{serbian}
+
+\setstocksize{297mm}{210mm}
+\settrimmedsize{\stockheight}{\stockwidth}{*}
+\setlrmarginsandblock{20mm}{20mm}{*}
+\setulmarginsandblock{30mm}{30mm}{*}
+\setheadfoot{\onelineskip}{2\onelineskip}
+\setheaderspaces{*}{*}{*}
+\settypeoutlayoutunit{mm}
+\checkandfixthelayout
+
+\SingleSpacing
+
+\makechapterstyle{etf}{
+	\chapterstyle{section}
+	\renewcommand*{\chapnumfont}{\normalfont\LARGE\bfseries}
+	\renewcommand*{\chaptitlefont}{\normalfont\LARGE\bfseries}
+}
+\chapterstyle{etf}
+\setsecheadstyle{\normalfont\large\bfseries}
+\setsubsecheadstyle{\normalfont\normalsize\bfseries}
+\setsecnumdepth{subsection}
+
+\newlength\fntht
+\newcommand*{\size}[2][1.2]{
+\setlength\fntht{#2}
+\fontsize{\fntht}{#1\fntht}
+\selectfont}
+
+\usepackage{tabularx}
+\usepackage{caption}
+\usepackage{graphicx}
+
+\usepackage[acronym,toc,nonumberlist]{glossaries}
+
+\usepackage[unicode,xetex]{hyperref}
+
+\usepackage[backend=biber,style=numeric,autolang=other]{biblatex}
+
+\addbibresource{literatura.bib}
+
+\renewcommand{\appendixpagename}{Додаци}
+\renewcommand{\appendixtocname}{Додаци}
+
+\makepagestyle{etf}
+\makeevenfoot{etf}{}{}{\thepage}
+\makeoddfoot{etf}{}{}{\thepage}
+
+\copypagestyle{chapter}{plain}
+\makeoddfoot{chapter}{}{}{\thepage}
+\makeevenfoot{chapter}{}{}{\thepage}
+
+\copypagestyle{part}{chapter}
+
+\newcommand{\autor}[1]{\def\etfautor{#1}}
+\newcommand{\naslov}[1]{\def\etfnaslov{#1}}
+\newcommand{\datum}[1]{\def\etfdatum{#1}}
+\newcommand{\mentor}[1]{\def\etfmentor{#1}}
+\newcommand{\indeks}[1]{\def\etfindeks{#1}}
+\newcommand{\zvanje}[1]{\def\etfzvanje{#1}}
+\newcommand{\apstr}[1]{\def\etfapstr{#1}}
+\newcommand{\kljucnereci}[1]{\def\etfkljucnereci{#1}}
+
+\newcommand{\univerzitet}{Универзитет у Београду}
+\newcommand{\fakultet}{Електротехнички факултет}
+\newcommand{\disertacija}{Дипломски рад}
+\newcommand{\grad}{Београд}
+\newcommand{\mentorl}{Ментор}
+\newcommand{\kandidat}{Кандидат}
+\newcommand{\naslovl}{Наслов дипломског рада}
+\newcommand{\rezime}{Резиме}
+\newcommand{\kljucnerecil}{Кључне речи}
+
+\newcommand{\titleF}{16pt}
+\newcommand{\titleFT}{22pt}
+
+\newcommand{\naslovna}{
+\begin{DoubleSpace}
+	{\clearpage
+		\thispagestyle{empty}
+		\centering
+		{\sffamily
+			{\size{\titleF} \textsc{\univerzitet}} \\
+			{\size{\titleF} \textsc{\fakultet}} \\[4em]
+			{\includegraphics[width=4cm]{etf.png}} \\[8em]
+			{\size{\titleFT} \textbf{\textsc{\etfnaslov}}} \\
+			{\size{\titleF} \disertacija}
+			\vfill
+			{\SingleSpacing\size{\titleF}
+				\begin{tabularx}{\textwidth}{l X l}
+					{\mentorl:} & & {\kandidat:} \\[0.5em]
+					{\etfmentor,} & & {\etfautor} \\
+					{\etfzvanje} & & {\etfindeks} \\
+				\end{tabularx}
+			} \\[4em]
+			
+			{\size{\titleF} \grad, \etfdatum.}
+		}
+	\clearpage}
+\end{DoubleSpace}
+\pagestyle{etf}
+}
+
+\newcommand{\posveta}[1]{
+	{\clearpage
+		\mbox{}\vspace{10em}
+		\flushright
+		{\size{14pt} \textit{#1}} \\
+		\vfill
+	\clearpage}
+}
+
+\newcommand{\apstrakt}{
+	{\clearpage
+		\noindent\textbf{\naslovl}: \etfnaslov \\[2em]
+		\noindent\textbf{\rezime}: \etfapstr \\[2em]
+		\noindent\textbf{\kljucnerecil}: \etfkljucnereci \\[1em]
+	\clearpage}
+}

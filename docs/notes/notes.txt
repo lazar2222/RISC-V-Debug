@@ -1,0 +1,54 @@
+Rad:
+	Naslovna Strana DONE
+	
+	(Zahvalnica) EMPTY
+	
+	Sažetak NOPE
+	
+	Sadržaj AUTO
+	
+	Uvod 1-1.5
+		Uvod u oblast (fokus na procesor)
+		Opis problema (fokus na debagovanje)
+		Pregled rezultata/rešenja iz literature ??
+		Naznake rešenja ??
+		Struktura rada
+	
+	Razrada 30-50
+		Pregled Postojećih rešenja ????
+			Korišćene tehnologije ?
+		Predlog rešenja na globalnom nivou (architecture overview)
+		Pregled detalja rešenja (elaborate contents)
+		
+		Korisničko uputstvo ???
+			Primer upotrebe ???
+		
+		Pregled dobijenih rezultata ???????
+			Tests maybe
+			Benchmarks ?????
+			Theoretical debugger performance ?????????????
+	
+	Zaključak 1-1.5
+		Osvrt na ciljeve
+		Rezultati tih ciljeva
+			pogodnosti, ograničenja, područija moguće primene
+		Uoceni problemi
+		Dalji rad
+		
+	
+	Literatura
+		(Spisak autora, Naziv dela, Izdavač, Mesto Izdanja, Godina izdanja, Broj izdanja, strane?)
+		Direktna
+		Indirektna
+	
+	Spisak skracenica
+	
+	Spisak slika
+	
+	Spisak tabela
+	
+	Prilozi
+	
+	
+Citiranje cinjenica?
+Implicitno citiranje?
