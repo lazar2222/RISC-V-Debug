@@ -20,7 +20,7 @@
 \else
 	\setmainfont[SmallCapsFont={Times New Roman},SmallCapsFeatures={Language=Default,Letters=SmallCaps}]{Times New Roman}
 	\setsansfont{Arial}
-	\setmonofont{Courier New}
+	\setmonofont{CMU Typewriter Text}
 \fi
 
 \selectlanguage{serbian}
@@ -60,7 +60,7 @@
 
 \usepackage[unicode,xetex]{hyperref}
 
-\usepackage[backend=biber,style=numeric,autolang=other]{biblatex}
+\usepackage[backend=biber,style=numeric,autolang=other,sorting=none]{biblatex}
 
 \addbibresource{literatura.bib}
 
@@ -142,3 +142,8 @@
 		\noindent\textbf{\kljucnerecil}: \etfkljucnereci \\[1em]
 	\clearpage}
 }
+
+\makecommand{\рисцв}{\textit{RISC-V} }
+\makecommand{\дм}{\textit{\acrshort{DM}}}
+\makecommand{\дтм}{\textit{\acrshort{DTM}}}
+\makecommand{\дми}{\textit{\acrshort{DMI}}}

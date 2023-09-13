@@ -11,6 +11,7 @@ Rad:
 		Uvod u oblast (fokus na procesor)
 		Opis problema (fokus na debagovanje)
 		Pregled rezultata/rešenja iz literature ??
+				cilj i ocekivani doprinos??????
 		Naznake rešenja ??
 		Struktura rada
 	
@@ -37,7 +38,7 @@ Rad:
 		
 	
 	Literatura
-		(Spisak autora, Naziv dela, Izdavač, Mesto Izdanja, Godina izdanja, Broj izdanja, strane?)
+		(Spisak autora, Naziv dela, Izdavač, Mesto Izdanja, Godina izdanja, Broj izdanja, strane)
 		Direktna
 		Indirektna
 	
