@@ -6,6 +6,30 @@
 	subtitle = {RISC-V: The Open Standard RISC Instruction Set Architecture},
 }
 
+@online{sifive,
+	author = {SiFive Inc.},
+	title = {SiFive},
+	url = {https://www.sifive.com/},
+	date = {2023-09-13},
+	subtitle = {Leading the RISC-V Revolution},
+}
+
+@online{hifive_site,
+	author = {SiFive Inc.},
+	title = {HiFive1 Rev B},
+	date = {2019-09-14},
+	url = {https://www.sifive.com/boards/hifive1-rev-b},
+	subtitle = {SiFive},
+}
+
+@online{tenstorrent,
+	author = {Tenstorrent Inc.},
+	title = {Tenstorrent},
+	url = {https://tenstorrent.com/},
+	date = {2023-09-13},
+	subtitle = {Scalable and Efficient Hardware for Deep Learning},
+}
+
 @techreport{rocket,
 	Author = {Asanović, Krste and Avizienis, Rimas and Bachrach, Jonathan and Beamer, Scott and Biancolin, David and Celio, Christopher and Cook, Henry and Dabbelt, Daniel and Hauser, John and Izraelevitz, Adam and Karandikar, Sagar and Keller, Ben and Kim, Donggyu and Koenig, John and Lee, Yunsup and Love, Eric and Maas, Martin and Magyar, Albert and Mao, Howard and Moreto, Miquel and Ou, Albert and Patterson, David A. and Richards, Brian and Schmidt, Colin and Twigg, Stephen and Vo, Huy and Waterman, Andrew},
 	Title = {The Rocket Chip Generator},
@@ -16,29 +40,110 @@
 	Abstract = {Rocket Chip is an open-source Sysem-on-Chip design generator that emits synthesizable RTL. It leverages the Chisel hardware construction language to compose a library of sophisticated generators for cores, caches, and interconnects into an integrated SoC. Rocket Chip generates general-purpose processor cores that use the open RISC-V ISA, and provides both an in-order core generator (Rocket) and an out-of-order core generator (BOOM). For SoC designers interested in utilizing heterogeneous specialization for added efficiency gains, Rocket Chip supports the integration of custom accelerators in the form of instruction set extensions, coprocessors, or fully independent novel cores. Rocket Chip has been taped out (manufactured) eleven times, and yielded functional silicon prototypes capable of booting Linux.}
 }
 
-
-@online{sifive,
-	author = {SiFive Inc.},
-	title = {SiFive},
-	url = {https://www.sifive.com/},
-	date = {2023-09-13},
-	subtitle = {Leading the RISC-V Revolution},
-}
-
-
-@online{tenstorrent,
-	author = {Tenstorrent Inc.},
-	title = {Tenstorrent},
-	url = {https://tenstorrent.com/},
-	date = {2023-09-13},
-	subtitle = {Scalable and Efficient Hardware for Deep Learning},
-}
-
-
-@report{debug_spec,
-	author = {RISC-V Foundation},
+@manual{debug_spec,
 	title = {RISC-V External Debug Support},
+	editora = {Tim Newsome},
+	editorb = {Megan Wachs},
+	publisher = {RISC-V Foundation},
 	version = {0.13.2},
-	institution = {RISC-V International},
 	date = {2019-03-22},
+}
+
+@manual{riscv_spec,
+	title = {The RISC-V Instruction Set Manual, Volume I: User-Level ISA},
+	editora = {Andrew Waterman},
+	editorb = {Krste Asanović},
+	publisher = {RISC-V Foundation},
+	version = {20191213},
+	date = {2019-12-13},
+}
+
+@manual{priv_spec,
+	title = {The RISC-V Instruction Set Manual, Volume II: Privileged Architecture},
+	editora = {Andrew Waterman},
+	editorb = {Krste Asanović},
+	editorc = {John Hauser},
+	publisher = {RISC-V International},
+	version = {20211203},
+	date = {2021-12-04}
+}
+
+@manual{hifive_manual,
+	title = {SiFive FE310-G002 Manual},
+	author = {SiFive Inc.},
+	version = {v1p5},
+	date = {2022-09-22}
+}
+
+@ARTICLE{sv_spec,
+	author={},
+	journal={IEEE Std 1800-2017 (Revision of IEEE Std 1800-2012)}, 
+	title={IEEE Standard for SystemVerilog--Unified Hardware Design, Specification, and Verification Language}, 
+	year={2018},
+	volume={},
+	number={},
+	pages={1-1315},
+	doi={10.1109/IEEESTD.2018.8299595}
+}
+	
+@manual{cycv_hb,
+	title = {Cyclone V Device Handbook, Volume 1: Device Interfaces and Integration},
+	author = {Altera Corporation},
+	version = {CV-5V2},
+	date = {2022-07-05}
+}
+
+@manual{quartus_man,
+	title = {Intel Quartus Prime Standard Edition User Guides - Combined},
+	author = {Intel Corporation},
+	date = {2019-12-16}
+}
+
+@manual{questa_man,
+	title = {Questa Intel FPGA Edition Simulation User Guide},
+	author = {Intel Corporation},
+	date = {2023-06-07}
+}
+
+@online{embcdt,
+	author = {Liviu Ionescu and others},
+	title = {Eclipse Embedded CDT},
+	url = {https://eclipse-embed-cdt.github.io/},
+	date = {2023-09-15},
+	subtitle = {Eclipse Embedded CDT  (C/C++ Development Tools)},
+}
+
+@online{gcc,
+	author = {Free Software Foundation Inc.},
+	title = {GCC online documentation},
+	url = {https://gcc.gnu.org/onlinedocs/},
+	date = {2023-09-15},
+	subtitle = {GNU Project},
+}
+
+@online{openocd,
+	author = {The OpenOCD Project},
+	title = {OpenOCD User’s Guide},
+	url = {https://openocd.org/doc/html/index.html},
+	date = {2023-09-15},
+	subtitle = {Top},
+}
+
+@ARTICLE{jtag_spec,
+	author={},
+	journal={IEEE Std 1149.1-2013 (Revision of IEEE Std 1149.1-2001)}, 
+	title={IEEE Standard for Test Access Port and Boundary-Scan Architecture}, 
+	year={2013},
+	volume={},
+	number={},
+	pages={1-444},
+	doi={10.1109/IEEESTD.2013.6515989}
+	}
+
+@online{jlink,
+	author = {Segger Microcontroller},
+	title = {Debug Probes - J-Link \& J-Trace},
+	url = {https://wiki.segger.com/Debug_Probes_-_J-Link_%26_J-Trace},
+	date = {2023-09-15},
+	subtitle = {SEGGER Wiki},
 }

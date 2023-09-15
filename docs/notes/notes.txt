@@ -18,6 +18,13 @@ Rad:
 	Razrada 30-50
 		Pregled Postojećih rešenja ????
 			Korišćene tehnologije ?
+				System Verilog 
+				FPGA Cyclone5
+				QUARTUS MODELSIM
+				ECLPSE CDT
+				GCC OPENOCD
+				JTAG
+				JLINK
 		Predlog rešenja na globalnom nivou (architecture overview)
 		Pregled detalja rešenja (elaborate contents)
 		
