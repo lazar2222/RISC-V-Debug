@@ -60,3 +60,14 @@ Rad:
 	
 Citiranje cinjenica?
 Implicitno citiranje?
+
+
+
+CPU
+
+osnovni datapath
+osnovni control
+
+csr
+
+int ctl

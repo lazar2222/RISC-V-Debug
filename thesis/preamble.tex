@@ -54,8 +54,19 @@
 
 \usepackage{tabularx}
 \usepackage{caption}
-\usepackage{graphicx}
-\usepackage[table]{xcolor}
+\usepackage[table,dvipsnames]{xcolor}
+\usepackage{listings}
+\renewcommand{\lstlistingname}{Пример кода}
+\renewcommand{\lstlistlistingname}{Списак примера кода}
+\lstset{language=Verilog,
+	basicstyle=\ttfamily\scriptsize,
+	keywordstyle=\color{blue}\ttfamily,
+	stringstyle=\color{Sepia}\ttfamily,
+	commentstyle=\color{OliveGreen}\ttfamily,
+	breaklines=true,
+	frame=single,
+	captionpos=b
+}
 
 \usepackage[acronym,toc,nonumberlist]{glossaries}
 
@@ -64,6 +75,10 @@
 \usepackage[backend=biber,style=numeric,autolang=other,sorting=none]{biblatex}
 
 \addbibresource{literatura.bib}
+
+\usepackage{graphicx}
+
+\graphicspath{ {./}{./img/} }
 
 \renewcommand{\appendixpagename}{Додаци}
 \renewcommand{\appendixtocname}{Додаци}

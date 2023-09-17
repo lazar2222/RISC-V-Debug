@@ -16,6 +16,7 @@ build/
 
 thesis/*.aux
 thesis/*.lof
+thesis/*.lol
 thesis/*.log
 thesis/*.lot
 thesis/*.out
@@ -35,3 +36,5 @@ thesis/*.ist
 
 thesis/*.run.xml
 thesis/*.synctex.gz
+
+thesis/dia/Backup*.cdr
