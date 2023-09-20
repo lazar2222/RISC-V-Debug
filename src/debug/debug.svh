@@ -200,7 +200,7 @@ assign data = dmi.address == `DEBUG__``register`` ? ``register``_reg : {32{1'b0}
 `define DEBUGGEN__GENERATE_MEMORY_ASSIGN(register) \
 assign memory[(32*`DEBUG__``register``_OFFSET)+:32] = ``register``_reg; \
 
-`define DEBUGGEN__GENERATE_MEMORY_GUARD_ASSIGN(register) \
+`define DEBUGGEN__GENERATE_MEMORY_GUARD_ASSIGN \
 assign memory[(32*16)+:32] = `DEBUG__EBREAK; \
 assign memory[(32*17)+:32] = `DEBUG__EBREAK; \
 assign memory[(32*18)+:32] = `DEBUG__EBREAK; \

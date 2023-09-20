@@ -67,6 +67,7 @@ module control (
         || mcp_reg == `CONTROL_SIGNALS__ABS_RMEM_1
         || mcp_reg == `CONTROL_SIGNALS__ABS_WMEM
         || mcp_reg == `CONTROL_SIGNALS__ABS_WMEM_1
+        || mcp_reg == `CONTROL_SIGNALS__ABS_NA
         );
 
     assign control_signals.mcp_addr = mcp_addr;

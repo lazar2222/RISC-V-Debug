@@ -103,7 +103,7 @@ module d_ctl (
         end else if (ebreak_cause) begin
             dpc = pc_reg;
         end else if (halt_cause || quickaccess_cause) begin
-            dpc = ctrl.write_pc_ne ? pc_next : pc_reg;
+            dpc = ctrl.mcp_addr == `CONTROL_SIGNALS__PROLOGUE ? pc_reg : pc_next;
         end else if (step_cause) begin
             dpc = pc_next;
         end else begin

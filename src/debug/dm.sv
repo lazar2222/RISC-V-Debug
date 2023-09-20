@@ -128,7 +128,7 @@ module dm #(
     wire                    sb_fault;
     
     `DEBUGGEN__FOREACH_SIMPLE(DEBUGGEN__GENERATE_MEMORY_ASSIGN)
-    `DEBUGGEN__FOREACH_SIMPLE(DEBUGGEN__GENERATE_MEMORY_GUARD_ASSIGN)
+    `DEBUGGEN__GENERATE_MEMORY_GUARD_ASSIGN
     
     wire aar = `DEBUG__AC_COMMAND(command) == `DEBUG__AC_COMMAND_ACCESS_REGISTER;
     wire aqa = `DEBUG__AC_COMMAND(command) == `DEBUG__AC_COMMAND_QUICK_ACCESS;
@@ -251,10 +251,10 @@ module dm #(
             if (dmi.address == `DEBUG__SBADDRESS0 && dmi.write) begin
                 if (sbbusy) begin
                     sbbusy_error <= 1'b1;
-                end else if (sberror == `DEBUG__SB_ERR_NO_ERR && !sbbusy_error && sbreadonaddr) begin
+                end else if (sberror == `DEBUG__SB_ERR_NO_ERR && !sbbusy_error) begin
                     sbaddr  <= dmi.data;
-                    sbbusy  <= 1'b1;
-                    sb_read <= 1'b1;
+                    sbbusy  <= sbreadonaddr;
+                    sb_read <= sbreadonaddr;
                 end
             end
             if (dmi.address == `DEBUG__SBDATA0 && dmi.write) begin
