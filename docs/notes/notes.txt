@@ -56,18 +56,3 @@ Rad:
 	Spisak tabela
 	
 	Prilozi
-	
-	
-Citiranje cinjenica?
-Implicitno citiranje?
-
-
-
-CPU
-
-osnovni datapath
-osnovni control
-
-csr
-
-int ctl
