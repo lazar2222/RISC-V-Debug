@@ -1,0 +1,29 @@
+Device "RISC-V" selected.
+Connecting to target via JTAG
+ConfigTargetSettings() start
+ConfigTargetSettings() end - Took 12us
+TotalIRLen = 5, IRPrint = 0x01
+JTAG chain detection found 1 devices:
+#0 Id: 0x00537291, IRLen: 05, Unknown device
+Debug architecture:
+RISC-V debug: 0.13
+AddrBits: 7
+DataBits: 32
+IdleClks: 0
+Memory access:
+Via system bus: Yes (8/16/32-bit accesses are supported)
+Via ProgBuf: Yes (16 ProgBuf entries)
+Via abstract command (AAM): May be tried as last resort
+DataBuf: 12 entries
+autoexec[0] implemented: Yes
+Detected: RV32 core
+Temp. halting CPU for for feature detection...
+HW instruction/data BPs: 4
+Support set/clr BPs while running: No
+HW data BPs trigger before execution of inst
+CSR access via abs. commands: Yes
+Feature detection done. Restarting core...
+BG memory access support: Via SBA
+Memory zones:
+Zone: "Default" Description: Default access mode
+RISC-V identified.

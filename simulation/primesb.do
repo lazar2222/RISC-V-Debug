@@ -10,5 +10,4 @@ do dmi_write.do 3c $3
 run 500
 echo $1
 echo $2
-echo $3
 pause
