@@ -7,19 +7,21 @@
 #include "interrupts.h"
 
 unsigned int time = 0;
-uint8_t count = 1;
+int8_t count = 1;
 
 void main()
 {
+	time = 0;
+	count = 1;
+
     GPIO->DDR = SET_BITS(GPIO->DDR, 1023 << 12);
 
     TIM->TIMCMP = 100;
     TIM->TIMCMPh = 0;
 
     EXTI->FER = 0x003;
-    EXTI->RER = 0xFFC;
 
-    EXTI->IMR = 0xFFF;
+    EXTI->IMR = 0x003;
 
     uint32_t mie = CSR_MIE_MTIE | CSR_MIE_MEIE;
     WRITE_CSR(mie, CSR_MIE);
@@ -30,7 +32,6 @@ void main()
     {
         if(nmi_flag)
         {
-        	count = !count;
             nmi_flag = 0;
         }
         if(tim_flag)
@@ -41,7 +42,15 @@ void main()
         }
         if(exti_flag != 0)
         {
-        	GPIO->DOR = TOGGLE_BITS(GPIO->DOR,exti_flag << 10);
+        	if(exti_flag & 0x1)
+        	{
+        		count = count + ((GPIO->DIR & GPIO_SW_MASK(0)) ? 1 : -1);
+        	}
+        	if(exti_flag & 0x2)
+			{
+        		time = (GPIO->DIR >> 2) & 0x3FF;
+        		HEX->DATA = time;
+			}
         	exti_flag = 0;
         }
     }

@@ -27,7 +27,7 @@ void exception_handler(void)
 void timer_handler(void)
 {
 	uint32_t old = TIM->TIMCMP;
-	uint32_t new = old + TIM_TICK_PER_MS * 100;
+	uint32_t new = old + TIM_TICK_PER_MS * 1000;
 	if(new < old)
 	{
 		TIM->TIMCMPh++;
@@ -39,5 +39,5 @@ void timer_handler(void)
 void exti_handler(void)
 {
     exti_flag = EXTI->IPR;
-    EXTI->IPR = EXTI->IPR;
+    EXTI->IPR = exti_flag;
 }
