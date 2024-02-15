@@ -4,4 +4,4 @@ This repository hosts the source code, documentation, and materials for the Bach
 
 [**Thesis**](thesis/DiplomskiRad_LPremovic.pdf)  
 [**Presentation**](demo/Prezentacija.pdf)  
-[**Demo Video**](demo/DemoVideo.mp4)  
+[**Demo Video**](https://lazar2222.github.io/resources/projects/riscv_debug_demo)  
